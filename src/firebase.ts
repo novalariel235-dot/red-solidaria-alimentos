@@ -42,12 +42,13 @@ import {
 // ─────────────────────────────────────────────────────────
 
 const firebaseConfig = {
-  apiKey: "TU_API_KEY_AQUI",
-  authDomain: "TU_PROJECT_ID.firebaseapp.com",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_PROJECT_ID.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyA1dY8F2IFFzS6VoC0gEI9Y5ixFZP8JGzM",
+  authDomain: "ariel-8f6c2.firebaseapp.com",
+  projectId: "ariel-8f6c2",
+  storageBucket: "ariel-8f6c2.firebasestorage.app",
+  messagingSenderId: "779116102386",
+  appId: "1:779116102386:web:8d52269b3c7177dd1e466b",
+  measurementId: "G-38F2XSCXCV"
 };
 
 // Detectar si Firebase está configurado
