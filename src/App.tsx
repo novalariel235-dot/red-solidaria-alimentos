@@ -124,9 +124,109 @@ function GoogleIcon() {
   );
 }
 
+// ─── Landing / Splash Screen ─────────────────────────────
+function LandingScreen({ onNavigate }: { onNavigate: (screen: 'login' | 'register') => void }) {
+  return (
+    <div className="min-h-screen bg-[#faf9f7] flex flex-col relative overflow-hidden">
+      {/* Background decorations */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-[#c8d5c3]/25 to-transparent rounded-full blur-3xl -translate-y-1/4 translate-x-1/4" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-[#e8d5c4]/20 to-transparent rounded-full blur-3xl translate-y-1/4 -translate-x-1/4" />
+        <div className="absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-gradient-to-br from-[#8faa88]/10 to-transparent rounded-full blur-3xl" />
+        <div className="absolute inset-0 opacity-[0.025]" style={{
+          backgroundImage: 'radial-gradient(circle, #5a7a54 1px, transparent 1px)',
+          backgroundSize: '40px 40px'
+        }} />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative z-10">
+        {/* Logo grande flotante */}
+        <div className="animate-fade-in-up mb-10">
+          <div className="relative group cursor-pointer">
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#5a7a54]/30 to-[#8faa88]/30 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 scale-110" />
+            
+            {/* Logo container */}
+            <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-3xl bg-gradient-to-br from-[#5a7a54] via-[#6d8f66] to-[#8faa88] flex items-center justify-center shadow-2xl shadow-[#5a7a54]/20 group-hover:shadow-[#5a7a54]/40 transition-all duration-500 animate-float group-hover:scale-105 group-hover:-rotate-2">
+              {/* Inner shine */}
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/20 to-transparent opacity-60" />
+              
+              {/* Icon */}
+              <HeartHandshake className="w-16 h-16 md:w-20 md:h-20 text-white relative z-10 drop-shadow-lg group-hover:scale-110 transition-transform duration-500" strokeWidth={1.5} />
+            </div>
+
+            {/* Floating particles */}
+            <div className="absolute -top-3 -right-3 w-6 h-6 rounded-full bg-[#c8d5c3] opacity-60 animate-float" style={{ animationDelay: '0.5s' }} />
+            <div className="absolute -bottom-2 -left-2 w-4 h-4 rounded-full bg-[#e8d5c4] opacity-60 animate-float" style={{ animationDelay: '1s' }} />
+            <div className="absolute top-1/2 -right-5 w-3 h-3 rounded-full bg-[#8faa88] opacity-40 animate-float" style={{ animationDelay: '1.5s' }} />
+          </div>
+        </div>
+
+        {/* Text content */}
+        <div className="text-center max-w-lg animate-fade-in-delay">
+          <h1 className="text-4xl md:text-5xl font-bold text-stone-800 tracking-tight mb-4 leading-tight">
+            Red Solidaria
+          </h1>
+          <p className="text-lg md:text-xl text-stone-500 mb-2 font-medium">
+            Vinculación de Alimentos
+          </p>
+          <p className="text-sm text-stone-400 uppercase tracking-widest mb-8">
+            Villa Regina · Río Negro
+          </p>
+          <p className="text-base md:text-lg text-stone-500 leading-relaxed max-w-md mx-auto">
+            Conectamos los excedentes de comercios locales con comedores comunitarios. 
+            La inteligencia artificial organiza, clasifica y notifica de forma automática.
+          </p>
+        </div>
+
+        {/* Feature pills */}
+        <div className="flex flex-wrap justify-center gap-3 mt-10 mb-12 animate-fade-in-delay-2">
+          {[
+            { icon: Bot, text: 'IA Qwen integrada' },
+            { icon: MessageCircle, text: 'Notificaciones WhatsApp' },
+            { icon: HeartHandshake, text: 'Impacto social' },
+          ].map((item, i) => (
+            <div key={i} className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-stone-200 px-4 py-2 rounded-full text-sm text-stone-600 shadow-sm">
+              <item.icon className="w-4 h-4 text-[#5a7a54]" />
+              {item.text}
+            </div>
+          ))}
+        </div>
+
+        {/* Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm animate-fade-in-delay-3">
+          <button
+            onClick={() => onNavigate('login')}
+            className="flex-1 flex items-center justify-center gap-2 bg-[#5a7a54] hover:bg-[#4d6a48] text-white px-7 py-4 rounded-xl font-semibold text-base shadow-lg shadow-[#5a7a54]/20 hover:shadow-xl hover:shadow-[#5a7a54]/30 transition-all duration-300 group"
+          >
+            Iniciar sesión
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+          <button
+            onClick={() => onNavigate('register')}
+            className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-stone-50 text-stone-700 px-7 py-4 rounded-xl font-semibold text-base border border-stone-200 shadow-sm hover:shadow-md transition-all duration-300"
+          >
+            Crear cuenta
+          </button>
+        </div>
+
+        {/* Footer note */}
+        <p className="mt-12 text-xs text-stone-400 text-center animate-fade-in-delay-3">
+          Proyecto con impacto social positivo · Impulsado por IA
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Auth Screen (Login / Register) ─────────────────────
-function AuthScreenComponent({ onLogin }: { onLogin: (user: Usuario) => void }) {
-  const [screen, setScreen] = useState<'login' | 'register'>('login');
+function AuthScreenComponent({ onLogin, initialScreen = 'login', onBack }: { 
+  onLogin: (user: Usuario) => void; 
+  initialScreen?: 'login' | 'register';
+  onBack?: () => void;
+}) {
+  const [screen, setScreen] = useState<'login' | 'register'>(initialScreen);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ nombre: '', email: '', password: '' });
@@ -221,6 +321,17 @@ function AuthScreenComponent({ onLogin }: { onLogin: (user: Usuario) => void }) 
       {/* Right: Form */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-12">
         <div className="w-full max-w-md">
+          {/* Back button */}
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="flex items-center gap-1.5 text-sm font-medium text-stone-400 hover:text-stone-600 transition-colors mb-6"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Volver al inicio
+            </button>
+          )}
+
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2.5 mb-10">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#5a7a54] to-[#8faa88] flex items-center justify-center">
@@ -1443,6 +1554,8 @@ export default function App() {
   const [comercio, setComercio] = useState<Comercio | null>(null);
   const [activeSection, setActiveSection] = useState('inicio');
   const [excedentes, setExcedentes] = useState<Excedente[]>(excedentesIniciales);
+  const [showLanding, setShowLanding] = useState(true);
+  const [authScreen, setAuthScreen] = useState<'login' | 'register'>('login');
 
   const handleLogin = (user: Usuario) => {
     setUsuario(user);
@@ -1456,17 +1569,32 @@ export default function App() {
     setUsuario(null);
     setComercio(null);
     setActiveSection('inicio');
+    setShowLanding(true);
   };
 
   const handlePublicar = (nuevo: Excedente) => {
     setExcedentes([nuevo, ...excedentes]);
   };
 
+  const handleLandingNavigate = (screen: 'login' | 'register') => {
+    setAuthScreen(screen);
+    setShowLanding(false);
+  };
+
+  const handleBackToLanding = () => {
+    setShowLanding(true);
+  };
+
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [activeSection]);
 
-  // No autenticado → pantalla de login
+  // Landing → pantalla de presentación
+  if (showLanding && !usuario) {
+    return <LandingScreen onNavigate={handleLandingNavigate} />;
+  }
+
+  // No autenticado → pantalla de login/registro
   if (!usuario) {
-    return <AuthScreenComponent onLogin={handleLogin} />;
+    return <AuthScreenComponent onLogin={handleLogin} initialScreen={authScreen} onBack={handleBackToLanding} />;
   }
 
   // Autenticado pero sin comercio → onboarding
