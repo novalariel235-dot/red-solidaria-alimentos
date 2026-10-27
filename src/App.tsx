@@ -282,11 +282,24 @@ function AuthScreenComponent({ onLogin, initialScreen = 'login', onBack }: {
       const user = await loginConGoogle();
       onLogin(user);
     } catch (err: any) {
-      console.error(err);
-      if (err?.code === 'auth/popup-closed-by-user') {
+      console.error('Error completo de Google login:', err);
+      const code = err?.code || '';
+      const message = err?.message || '';
+      
+      if (code === 'auth/popup-closed-by-user') {
         setError('Cerraste la ventana de Google');
+      } else if (code === 'auth/popup-blocked') {
+        setError('El navegador bloqueó la ventana. Permití popups para este sitio.');
+      } else if (code === 'auth/unauthorized-domain') {
+        setError(`Dominio no autorizado. Agregá este dominio en Firebase Console → Authentication → Settings → Authorized domains. Dominio actual: ${window.location.hostname}`);
+      } else if (code === 'auth/api-key-not-valid') {
+        setError('API key inválida. Verificá la configuración de Firebase.');
+      } else if (code === 'auth/network-request-failed') {
+        setError('Error de red. Verificá tu conexión a internet.');
+      } else if (code === 'auth/operation-not-allowed') {
+        setError('Google no está habilitado. Andá a Firebase Console → Authentication → Sign-in method y habilitá Google.');
       } else {
-        setError('No se pudo iniciar sesión con Google');
+        setError(`Error: ${code || message || 'Desconocido'}`);
       }
     } finally {
       setLoading(false);
