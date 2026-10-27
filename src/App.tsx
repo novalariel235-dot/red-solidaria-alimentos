@@ -7,6 +7,18 @@ import {
   Server, Wifi, CircleDot, Play, Mail, Lock, User,
   Eye, EyeOff, ArrowLeft, Building2, Truck, Globe
 } from 'lucide-react';
+import {
+  isFirebaseConfigured,
+  loginConGoogle,
+  loginConEmail,
+  registrarConEmail,
+  logout as firebaseLogout,
+  observarAuth,
+  guardarComercio,
+  obtenerComercio,
+  type Usuario,
+  type Comercio
+} from './firebase';
 
 // ─── Types ───────────────────────────────────────────────
 interface Excedente {
@@ -35,21 +47,7 @@ interface MensajeGenerado {
   enviado: boolean;
 }
 
-interface Usuario {
-  nombre: string;
-  email: string;
-  avatar?: string;
-  proveedor: 'google' | 'email';
-}
 
-interface Comercio {
-  nombre: string;
-  tipo: string;
-  direccion: string;
-  telefono: string;
-  descripcion: string;
-  horarioRetiro: string;
-}
 
 type AuthScreen = 'login' | 'register' | 'onboarding';
 
@@ -232,7 +230,7 @@ function AuthScreenComponent({ onLogin, initialScreen = 'login', onBack }: {
   const [form, setForm] = useState({ nombre: '', email: '', password: '' });
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!form.email || !form.password) {
@@ -243,25 +241,56 @@ function AuthScreenComponent({ onLogin, initialScreen = 'login', onBack }: {
       setError('Ingresá tu nombre');
       return;
     }
+    if (screen === 'register' && form.password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
-      onLogin({
-        nombre: form.nombre || form.email.split('@')[0],
-        email: form.email,
-        proveedor: 'email'
-      });
-    }, 1200);
+    try {
+      let user: Usuario;
+      if (screen === 'login') {
+        user = await loginConEmail(form.email, form.password);
+      } else {
+        user = await registrarConEmail(form.nombre, form.email, form.password);
+      }
+      onLogin(user);
+    } catch (err: any) {
+      console.error(err);
+      const code = err?.code || '';
+      if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+        setError('Email o contraseña incorrectos');
+      } else if (code === 'auth/email-already-in-use') {
+        setError('Este email ya está registrado');
+      } else if (code === 'auth/weak-password') {
+        setError('La contraseña es muy débil (mínimo 6 caracteres)');
+      } else if (code === 'auth/invalid-email') {
+        setError('Email inválido');
+      } else if (!isFirebaseConfigured) {
+        setError('Modo demo: completá todos los campos correctamente');
+      } else {
+        setError('Ocurrió un error. Intentá de nuevo.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setLoading(true);
-    setTimeout(() => {
-      onLogin({
-        nombre: 'Usuario Google',
-        email: 'usuario@gmail.com',
-        proveedor: 'google'
-      });
-    }, 1000);
+    setError('');
+    try {
+      const user = await loginConGoogle();
+      onLogin(user);
+    } catch (err: any) {
+      console.error(err);
+      if (err?.code === 'auth/popup-closed-by-user') {
+        setError('Cerraste la ventana de Google');
+      } else {
+        setError('No se pudo iniciar sesión con Google');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -449,6 +478,18 @@ function AuthScreenComponent({ onLogin, initialScreen = 'login', onBack }: {
               {screen === 'login' ? 'Registrate' : 'Iniciá sesión'}
             </button>
           </p>
+
+          {/* Modo demo indicator */}
+          {!isFirebaseConfigured && (
+            <div className="mt-6 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+              <div className="flex items-start gap-2">
+                <span className="text-amber-600 shrink-0">⚠️</span>
+                <div>
+                  <strong>Modo demo activo.</strong> La autenticación está simulada. Para activar login real con Google y base de datos, configurá Firebase en <code className="bg-amber-100 px-1 rounded">src/firebase.ts</code>.
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1556,16 +1597,54 @@ export default function App() {
   const [excedentes, setExcedentes] = useState<Excedente[]>(excedentesIniciales);
   const [showLanding, setShowLanding] = useState(true);
   const [authScreen, setAuthScreen] = useState<'login' | 'register'>('login');
+  const [loadingSession, setLoadingSession] = useState(true);
+
+  // Observer de Firebase Auth para persistencia de sesión
+  useEffect(() => {
+    const unsubscribe = observarAuth(async (user) => {
+      setUsuario(user);
+      if (user) {
+        // Intentar cargar comercio guardado
+        try {
+          const comercioGuardado = await obtenerComercio(user.uid);
+          if (comercioGuardado) {
+            setComercio(comercioGuardado);
+          } else {
+            setComercio(null);
+          }
+        } catch (err) {
+          console.error('Error cargando comercio:', err);
+          setComercio(null);
+        }
+      } else {
+        setComercio(null);
+      }
+      setLoadingSession(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleLogin = (user: Usuario) => {
     setUsuario(user);
   };
 
-  const handleOnboardingComplete = (comercioData: Comercio) => {
+  const handleOnboardingComplete = async (comercioData: Comercio) => {
     setComercio(comercioData);
+    if (usuario) {
+      try {
+        await guardarComercio(usuario.uid, comercioData);
+      } catch (err) {
+        console.error('Error guardando comercio:', err);
+      }
+    }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await firebaseLogout();
+    } catch (err) {
+      console.error('Error en logout:', err);
+    }
     setUsuario(null);
     setComercio(null);
     setActiveSection('inicio');
@@ -1586,6 +1665,20 @@ export default function App() {
   };
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [activeSection]);
+
+  // Loading session (Firebase verificando)
+  if (loadingSession) {
+    return (
+      <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#5a7a54] to-[#8faa88] flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <HeartHandshake className="w-8 h-8 text-white" />
+          </div>
+          <p className="text-sm text-stone-400">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Landing → pantalla de presentación
   if (showLanding && !usuario) {
