@@ -4,7 +4,8 @@ import {
   ArrowRight, MapPin, Phone, Clock, Tag, CheckCircle2,
   Send, ChevronRight, Sparkles, Store, Users, Recycle,
   TrendingUp, MessageCircle, FileText, Brain, Database,
-  Server, Wifi, CircleDot, Play
+  Server, Wifi, CircleDot, Play, Mail, Lock, User,
+  Eye, EyeOff, ArrowLeft, Building2, Truck, Globe
 } from 'lucide-react';
 
 // ─── Types ───────────────────────────────────────────────
@@ -34,6 +35,24 @@ interface MensajeGenerado {
   enviado: boolean;
 }
 
+interface Usuario {
+  nombre: string;
+  email: string;
+  avatar?: string;
+  proveedor: 'google' | 'email';
+}
+
+interface Comercio {
+  nombre: string;
+  tipo: string;
+  direccion: string;
+  telefono: string;
+  descripcion: string;
+  horarioRetiro: string;
+}
+
+type AuthScreen = 'login' | 'register' | 'onboarding';
+
 // ─── Mock Data ───────────────────────────────────────────
 const comedoresMock: Comedor[] = [
   { id: '1', nombre: 'Manos Solidarias', direccion: 'Av. San Martín 450', telefono: '+54 294 455-1234', capacidad: 80, personasAtendidas: 65 },
@@ -46,6 +65,11 @@ const excedentesIniciales: Excedente[] = [
   { id: '1', comercio: 'Panadería La Espiga Dorada', descripcionOriginal: 'me sobran 30 facturas y 2 kilos de pan del día', categoria: 'Panadería', cantidad: '30 facturas + 2 kg pan', vencimientoEstimado: '24 horas', fechaPublicacion: '2026-01-15', estado: 'disponible' },
   { id: '2', comercio: 'Verdulería Don José', descripcionOriginal: 'tengo como 5 kg de tomate y 3 kg de zanahoria que no vendí hoy', categoria: 'Verduras', cantidad: '5 kg tomate + 3 kg zanahoria', vencimientoEstimado: '2-3 días', fechaPublicacion: '2026-01-15', estado: 'disponible' },
   { id: '3', comercio: 'Almacén La Esquina', descripcionOriginal: 'quedan 10 litros de leche que vencen mañana', categoria: 'Lácteos', cantidad: '10 litros de leche', vencimientoEstimado: '1 día', fechaPublicacion: '2026-01-15', estado: 'reservado' },
+];
+
+const tiposComercio = [
+  'Panadería', 'Verdulería', 'Frutería', 'Almacén', 'Carnicería',
+  'Lácteos', 'Restaurante', 'Comedor comunitario', 'Otro'
 ];
 
 // ─── AI Simulation ───────────────────────────────────────
@@ -88,9 +112,480 @@ const categoriaConfig: Record<string, { color: string; bg: string }> = {
   'Varios': { color: 'text-stone-700', bg: 'bg-stone-50 border-stone-200' },
 };
 
-// ─── Header ──────────────────────────────────────────────
-function Header({ activeSection, setActiveSection }: { activeSection: string; setActiveSection: (s: string) => void }) {
+// ─── Google Icon ─────────────────────────────────────────
+function GoogleIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+    </svg>
+  );
+}
+
+// ─── Auth Screen (Login / Register) ─────────────────────
+function AuthScreenComponent({ onLogin }: { onLogin: (user: Usuario) => void }) {
+  const [screen, setScreen] = useState<'login' | 'register'>('login');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ nombre: '', email: '', password: '' });
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!form.email || !form.password) {
+      setError('Completá todos los campos');
+      return;
+    }
+    if (screen === 'register' && !form.nombre) {
+      setError('Ingresá tu nombre');
+      return;
+    }
+    setLoading(true);
+    setTimeout(() => {
+      onLogin({
+        nombre: form.nombre || form.email.split('@')[0],
+        email: form.email,
+        proveedor: 'email'
+      });
+    }, 1200);
+  };
+
+  const handleGoogleLogin = () => {
+    setLoading(true);
+    setTimeout(() => {
+      onLogin({
+        nombre: 'Usuario Google',
+        email: 'usuario@gmail.com',
+        proveedor: 'google'
+      });
+    }, 1000);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7] flex">
+      {/* Left: Decorative panel */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-[#5a7a54] to-[#3d5438]">
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+          backgroundSize: '24px 24px'
+        }} />
+        <div className="absolute top-20 right-20 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-10 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
+        
+        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <HeartHandshake className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-white font-semibold text-lg">Red Solidaria</span>
+            </div>
+            <p className="text-white/60 text-sm">Vinculación de Alimentos · Villa Regina</p>
+          </div>
+
+          <div className="space-y-8">
+            <h2 className="text-4xl font-bold text-white leading-tight">
+              Conectamos comercios con{' '}
+              <span className="font-serif italic text-white/90">quienes más lo necesitan</span>
+            </h2>
+            <p className="text-white/70 text-lg leading-relaxed max-w-md">
+              Publicá tus excedentes de forma simple. La inteligencia artificial se encarga de clasificarlos y notificar a los comedores cercanos.
+            </p>
+
+            <div className="flex items-center gap-6 pt-4">
+              <div className="flex -space-x-2">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className="w-9 h-9 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center">
+                    <User className="w-4 h-4 text-white/80" />
+                  </div>
+                ))}
+              </div>
+              <div>
+                <div className="text-white font-semibold text-sm">+12 comercios activos</div>
+                <div className="text-white/60 text-xs">en Villa Regina</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 text-white/50 text-xs">
+            <span>Impulsado por IA Qwen</span>
+            <span className="w-1 h-1 rounded-full bg-white/30" />
+            <span>Impacto social positivo</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Form */}
+      <div className="flex-1 flex items-center justify-center p-6 md:p-12">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="lg:hidden flex items-center gap-2.5 mb-10">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#5a7a54] to-[#8faa88] flex items-center justify-center">
+              <HeartHandshake className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-stone-800">Red Solidaria</div>
+              <div className="text-[10px] text-stone-400 uppercase tracking-wider">Villa Regina</div>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h3 className="text-2xl md:text-3xl font-bold text-stone-800 tracking-tight">
+              {screen === 'login' ? 'Iniciá sesión' : 'Creá tu cuenta'}
+            </h3>
+            <p className="text-stone-400 mt-2">
+              {screen === 'login' 
+                ? 'Ingresá para acceder a la plataforma' 
+                : 'Unite a la red solidaria de Villa Regina'}
+            </p>
+          </div>
+
+          {/* Google button */}
+          <button
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-stone-50 border border-stone-200 hover:border-stone-300 text-stone-700 py-3.5 rounded-xl font-medium transition-all shadow-sm disabled:opacity-60"
+          >
+            <GoogleIcon />
+            Continuar con Google
+          </button>
+
+          <div className="flex items-center gap-4 my-6">
+            <div className="flex-1 h-px bg-stone-200" />
+            <span className="text-xs text-stone-400 font-medium uppercase tracking-wider">o con email</span>
+            <div className="flex-1 h-px bg-stone-200" />
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {screen === 'register' && (
+              <div>
+                <label className="block text-sm font-medium text-stone-600 mb-1.5">Nombre completo</label>
+                <div className="relative">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" />
+                  <input
+                    type="text"
+                    value={form.nombre}
+                    onChange={(e) => setForm({...form, nombre: e.target.value})}
+                    placeholder="Tu nombre"
+                    className="w-full pl-10 pr-4 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none text-stone-800 placeholder:text-stone-300 text-sm"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-stone-600 mb-1.5">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" />
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({...form, email: e.target.value})}
+                  placeholder="tu@email.com"
+                  className="w-full pl-10 pr-4 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none text-stone-800 placeholder:text-stone-300 text-sm"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-stone-600 mb-1.5">Contraseña</label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={(e) => setForm({...form, password: e.target.value})}
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-11 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none text-stone-800 placeholder:text-stone-300 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-300 hover:text-stone-500 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-[#5a7a54] hover:bg-[#4d6a48] disabled:opacity-60 text-white py-3.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 shadow-sm mt-6"
+            >
+              {loading ? (
+                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Procesando...</>
+              ) : (
+                <>{screen === 'login' ? 'Iniciar sesión' : 'Crear cuenta'} <ArrowRight className="w-4 h-4" /></>
+              )}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-stone-400 mt-6">
+            {screen === 'login' ? '¿No tenés cuenta?' : '¿Ya tenés cuenta?'}{' '}
+            <button
+              onClick={() => { setScreen(screen === 'login' ? 'register' : 'login'); setError(''); }}
+              className="text-[#5a7a54] font-medium hover:underline"
+            >
+              {screen === 'login' ? 'Registrate' : 'Iniciá sesión'}
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Onboarding Screen ───────────────────────────────────
+function OnboardingScreen({ usuario, onComplete }: { usuario: Usuario; onComplete: (comercio: Comercio) => void }) {
+  const [step, setStep] = useState(1);
+  const [comercio, setComercio] = useState<Comercio>({
+    nombre: '',
+    tipo: '',
+    direccion: '',
+    telefono: '',
+    descripcion: '',
+    horarioRetiro: ''
+  });
+  const [loading, setLoading] = useState(false);
+
+  const totalSteps = 3;
+  const canNext = () => {
+    if (step === 1) return comercio.nombre && comercio.tipo;
+    if (step === 2) return comercio.direccion && comercio.telefono;
+    return true;
+  };
+
+  const handleFinish = () => {
+    setLoading(true);
+    setTimeout(() => onComplete(comercio), 1000);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center p-6">
+      <div className="w-full max-w-lg">
+        {/* Progress */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium text-stone-500">Paso {step} de {totalSteps}</span>
+            <span className="text-sm text-stone-400">{Math.round((step / totalSteps) * 100)}%</span>
+          </div>
+          <div className="w-full h-1.5 bg-stone-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-[#5a7a54] to-[#8faa88] rounded-full transition-all duration-500"
+              style={{ width: `${(step / totalSteps) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Card */}
+        <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-6 md:p-8 animate-fade-in">
+          {step === 1 && (
+            <div className="animate-fade-in-up">
+              <div className="w-12 h-12 rounded-xl bg-[#5a7a54]/10 flex items-center justify-center mb-5">
+                <Building2 className="w-6 h-6 text-[#5a7a54]" />
+              </div>
+              <h3 className="text-2xl font-bold text-stone-800 tracking-tight mb-2">Contanos sobre tu comercio</h3>
+              <p className="text-stone-400 text-sm mb-6">Esto nos ayuda a conectar con la organización correcta.</p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 mb-1.5">Nombre del comercio u organización</label>
+                  <input
+                    type="text"
+                    value={comercio.nombre}
+                    onChange={(e) => setComercio({...comercio, nombre: e.target.value})}
+                    placeholder="Ej: Panadería La Espiga Dorada"
+                    className="w-full px-4 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none text-stone-800 placeholder:text-stone-300 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 mb-1.5">Tipo de organización</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {tiposComercio.map((tipo) => (
+                      <button
+                        key={tipo}
+                        onClick={() => setComercio({...comercio, tipo})}
+                        className={`px-3 py-2.5 rounded-xl text-xs font-medium transition-all border ${
+                          comercio.tipo === tipo
+                            ? 'bg-[#5a7a54] text-white border-[#5a7a54] shadow-sm'
+                            : 'bg-[#faf9f7] text-stone-600 border-stone-200 hover:border-[#c8d5c3]'
+                        }`}
+                      >
+                        {tipo}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="animate-fade-in-up">
+              <div className="w-12 h-12 rounded-xl bg-[#5a7a54]/10 flex items-center justify-center mb-5">
+                <MapPin className="w-6 h-6 text-[#5a7a54]" />
+              </div>
+              <h3 className="text-2xl font-bold text-stone-800 tracking-tight mb-2">Ubicación y contacto</h3>
+              <p className="text-stone-400 text-sm mb-6">Para que los comedores puedan retirarlo fácilmente.</p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 mb-1.5">Dirección</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" />
+                    <input
+                      type="text"
+                      value={comercio.direccion}
+                      onChange={(e) => setComercio({...comercio, direccion: e.target.value})}
+                      placeholder="Av. San Martín 123, Villa Regina"
+                      className="w-full pl-10 pr-4 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none text-stone-800 placeholder:text-stone-300 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 mb-1.5">Teléfono de contacto</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" />
+                    <input
+                      type="tel"
+                      value={comercio.telefono}
+                      onChange={(e) => setComercio({...comercio, telefono: e.target.value})}
+                      placeholder="+54 294 455-0000"
+                      className="w-full pl-10 pr-4 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none text-stone-800 placeholder:text-stone-300 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 mb-1.5">Horario de retiro</label>
+                  <div className="relative">
+                    <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" />
+                    <input
+                      type="text"
+                      value={comercio.horarioRetiro}
+                      onChange={(e) => setComercio({...comercio, horarioRetiro: e.target.value})}
+                      placeholder="Ej: Lunes a viernes, 18 a 20hs"
+                      className="w-full pl-10 pr-4 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none text-stone-800 placeholder:text-stone-300 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="animate-fade-in-up">
+              <div className="w-12 h-12 rounded-xl bg-[#5a7a54]/10 flex items-center justify-center mb-5">
+                <FileText className="w-6 h-6 text-[#5a7a54]" />
+              </div>
+              <h3 className="text-2xl font-bold text-stone-800 tracking-tight mb-2">Último paso</h3>
+              <p className="text-stone-400 text-sm mb-6">Contanos brevemente sobre tu actividad.</p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 mb-1.5">Descripción (opcional)</label>
+                  <textarea
+                    value={comercio.descripcion}
+                    onChange={(e) => setComercio({...comercio, descripcion: e.target.value})}
+                    placeholder="Ej: Somos una panadería familiar que trabaja hace 20 años en el barrio..."
+                    rows={4}
+                    className="w-full px-4 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none resize-none text-stone-800 placeholder:text-stone-300 text-sm"
+                  />
+                </div>
+
+                {/* Summary */}
+                <div className="bg-[#f5f8f4] rounded-xl p-4 border border-[#e4ede2]">
+                  <div className="text-xs font-medium text-[#5a7a54] uppercase tracking-wider mb-3">Resumen</div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-stone-600">
+                      <Building2 className="w-3.5 h-3.5 text-stone-400" />
+                      <span className="font-medium">{comercio.nombre || '—'}</span>
+                      <span className="text-stone-400">· {comercio.tipo || '—'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-stone-600">
+                      <MapPin className="w-3.5 h-3.5 text-stone-400" />
+                      {comercio.direccion || '—'}
+                    </div>
+                    <div className="flex items-center gap-2 text-stone-600">
+                      <Phone className="w-3.5 h-3.5 text-stone-400" />
+                      {comercio.telefono || '—'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Navigation */}
+          <div className="flex items-center justify-between mt-8 pt-6 border-t border-stone-100">
+            {step > 1 ? (
+              <button
+                onClick={() => setStep(step - 1)}
+                className="flex items-center gap-1.5 text-sm font-medium text-stone-500 hover:text-stone-700 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Atrás
+              </button>
+            ) : <div />}
+
+            {step < totalSteps ? (
+              <button
+                onClick={() => canNext() && setStep(step + 1)}
+                disabled={!canNext()}
+                className="flex items-center gap-2 bg-[#5a7a54] hover:bg-[#4d6a48] disabled:bg-stone-200 disabled:text-stone-400 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition-all shadow-sm"
+              >
+                Siguiente
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={handleFinish}
+                disabled={loading}
+                className="flex items-center gap-2 bg-[#5a7a54] hover:bg-[#4d6a48] disabled:opacity-60 text-white px-6 py-2.5 rounded-xl font-medium text-sm transition-all shadow-sm"
+              >
+                {loading ? (
+                  <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Creando perfil...</>
+                ) : (
+                  <><CheckCircle2 className="w-4 h-4" /> Finalizar</>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* User info */}
+        <div className="mt-6 flex items-center justify-center gap-2 text-xs text-stone-400">
+          <div className="w-6 h-6 rounded-full bg-stone-100 flex items-center justify-center">
+            <User className="w-3 h-3 text-stone-400" />
+          </div>
+          <span>{usuario.email}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Header (authenticated) ──────────────────────────────
+function Header({ activeSection, setActiveSection, usuario, comercio, onLogout }: {
+  activeSection: string;
+  setActiveSection: (s: string) => void;
+  usuario: Usuario;
+  comercio: Comercio;
+  onLogout: () => void;
+}) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const navItems = [
     { id: 'inicio', label: 'Inicio' },
@@ -132,8 +627,57 @@ function Header({ activeSection, setActiveSection }: { activeSection: string; se
             ))}
           </nav>
 
-          {/* CTA + Mobile */}
+          {/* User menu */}
           <div className="flex items-center gap-3">
+            <div className="relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2.5 pl-3 pr-2 py-1.5 rounded-xl hover:bg-stone-100 transition-colors"
+              >
+                <div className="hidden sm:block text-right">
+                  <div className="text-xs font-semibold text-stone-700 leading-tight">{comercio.nombre}</div>
+                  <div className="text-[10px] text-stone-400">{comercio.tipo}</div>
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#5a7a54] to-[#8faa88] flex items-center justify-center text-white text-xs font-bold">
+                  {comercio.nombre.charAt(0).toUpperCase()}
+                </div>
+              </button>
+
+              {userMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-stone-100 py-2 z-50 animate-fade-in">
+                    <div className="px-4 py-3 border-b border-stone-100">
+                      <div className="font-semibold text-stone-800 text-sm">{usuario.nombre}</div>
+                      <div className="text-xs text-stone-400">{usuario.email}</div>
+                      <div className="mt-2 inline-flex items-center gap-1.5 bg-[#f5f8f4] px-2 py-0.5 rounded-md text-[10px] font-medium text-[#5a7a54] border border-[#e4ede2]">
+                        {usuario.proveedor === 'google' ? <Globe className="w-3 h-3" /> : <Mail className="w-3 h-3" />}
+                        {usuario.proveedor === 'google' ? 'Google' : 'Email'}
+                      </div>
+                    </div>
+                    <div className="px-4 py-3 border-b border-stone-100">
+                      <div className="text-[10px] uppercase tracking-wider text-stone-400 font-medium mb-1.5">Mi comercio</div>
+                      <div className="flex items-center gap-2 text-sm text-stone-700">
+                        <Store className="w-3.5 h-3.5 text-stone-400" />
+                        {comercio.nombre}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-stone-400 mt-1">
+                        <MapPin className="w-3 h-3" />
+                        {comercio.direccion}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => { onLogout(); setUserMenuOpen(false); }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                      Cerrar sesión
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
             <button
               onClick={() => setActiveSection('publicar')}
               className="hidden md:flex items-center gap-2 bg-[#5a7a54] hover:bg-[#4d6a48] text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm"
@@ -141,6 +685,7 @@ function Header({ activeSection, setActiveSection }: { activeSection: string; se
               <Package className="w-4 h-4" />
               Publicar
             </button>
+
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               className="md:hidden p-2 rounded-lg hover:bg-stone-100 transition-colors"
@@ -176,15 +721,13 @@ function Header({ activeSection, setActiveSection }: { activeSection: string; se
 }
 
 // ─── Hero Section ────────────────────────────────────────
-function HeroSection({ setActiveSection }: { setActiveSection: (s: string) => void }) {
+function HeroSection({ setActiveSection, comercio }: { setActiveSection: (s: string) => void; comercio: Comercio }) {
   return (
     <section className="relative overflow-hidden">
-      {/* Background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-[#faf9f7] via-[#f5f3ef] to-[#eef2ec]" />
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[#c8d5c3]/30 to-transparent rounded-full blur-3xl -translate-y-1/3 translate-x-1/4" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-[#e8d5c4]/20 to-transparent rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
-        {/* Subtle grid pattern */}
         <div className="absolute inset-0 opacity-[0.03]" style={{
           backgroundImage: 'radial-gradient(circle, #5a7a54 1px, transparent 1px)',
           backgroundSize: '32px 32px'
@@ -193,12 +736,11 @@ function HeroSection({ setActiveSection }: { setActiveSection: (s: string) => vo
 
       <div className="relative max-w-6xl mx-auto px-5 md:px-8 pt-16 md:pt-24 pb-16 md:pb-20">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left: Text */}
           <div>
             <div className="animate-fade-in-up">
               <div className="inline-flex items-center gap-2 bg-white/80 border border-[#c8d5c3] px-3.5 py-1.5 rounded-full text-xs font-medium text-[#5a7a54] mb-6 shadow-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#5a7a54] animate-pulse" />
-                Plataforma activa en Villa Regina
+                Hola, {comercio.nombre}
               </div>
             </div>
 
@@ -208,8 +750,7 @@ function HeroSection({ setActiveSection }: { setActiveSection: (s: string) => vo
             </h2>
 
             <p className="animate-fade-in-delay text-lg text-stone-500 leading-relaxed mb-8 max-w-lg">
-              Conectamos los excedentes de comercios locales con comedores comunitarios. 
-              La inteligencia artificial organiza, clasifica y notifica de forma automática.
+              Desde tu comercio podés publicar excedentes y conectar con comedores comunitarios de Villa Regina. La IA organiza todo por vos.
             </p>
 
             <div className="animate-fade-in-delay-2 flex flex-col sm:flex-row gap-3">
@@ -230,10 +771,8 @@ function HeroSection({ setActiveSection }: { setActiveSection: (s: string) => vo
             </div>
           </div>
 
-          {/* Right: Visual card */}
           <div className="animate-fade-in-delay-3 hidden lg:block">
             <div className="relative">
-              {/* Main card */}
               <div className="bg-white rounded-2xl shadow-xl shadow-stone-200/50 border border-stone-100 p-6 relative z-10">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-10 h-10 rounded-xl bg-[#5a7a54]/10 flex items-center justify-center">
@@ -272,7 +811,6 @@ function HeroSection({ setActiveSection }: { setActiveSection: (s: string) => vo
                 </div>
               </div>
 
-              {/* Floating elements */}
               <div className="absolute -top-4 -right-4 bg-white rounded-xl shadow-lg border border-stone-100 p-3 animate-float z-20">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
@@ -300,7 +838,7 @@ function HeroSection({ setActiveSection }: { setActiveSection: (s: string) => vo
           </div>
         </div>
 
-        {/* Stats bar */}
+        {/* Stats */}
         <div className="mt-16 md:mt-20 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {[
             { icon: Store, value: '12', label: 'Comercios activos' },
@@ -323,10 +861,10 @@ function HeroSection({ setActiveSection }: { setActiveSection: (s: string) => vo
 // ─── Cómo funciona ───────────────────────────────────────
 function ComoFunciona() {
   const pasos = [
-    { icon: FileText, title: 'El comercio publica', desc: 'Escribís en texto libre qué alimentos te sobraron. Sin formularios complicados.' },
-    { icon: Brain, title: 'La IA estructura', desc: 'Qwen analiza el texto, identifica categoría, cantidad y vencimiento estimado.' },
-    { icon: MessageCircle, title: 'Se notifican comedores', desc: 'Se genera un mensaje empático y personalizado para enviar por WhatsApp.' },
-    { icon: HeartHandshake, title: 'Se realiza la entrega', desc: 'El comedor retira los alimentos y los distribuye entre las familias.' },
+    { icon: FileText, title: 'Publicás en texto libre', desc: 'Escribís qué alimentos te sobraron, sin formularios complicados.' },
+    { icon: Brain, title: 'La IA estructura', desc: 'Qwen analiza el texto, identifica categoría, cantidad y vencimiento.' },
+    { icon: MessageCircle, title: 'Se notifican comedores', desc: 'Se genera un mensaje empático y personalizado por WhatsApp.' },
+    { icon: HeartHandshake, title: 'Se realiza la entrega', desc: 'El comedor retira los alimentos y los distribuye.' },
   ];
 
   return (
@@ -366,15 +904,14 @@ function ComoFunciona() {
 }
 
 // ─── Publicar Excedente ──────────────────────────────────
-function PublicarExcedente({ onPublicar }: { onPublicar: (e: Excedente) => void }) {
+function PublicarExcedente({ onPublicar, comercioNombre }: { onPublicar: (e: Excedente) => void; comercioNombre: string }) {
   const [textoLibre, setTextoLibre] = useState('');
-  const [comercio, setComercio] = useState('');
   const [procesando, setProcesando] = useState(false);
   const [resultadoIA, setResultadoIA] = useState<{ categoria: string; cantidad: string; vencimientoEstimado: string } | null>(null);
   const [confirmado, setConfirmado] = useState(false);
 
   const procesar = () => {
-    if (!textoLibre.trim() || !comercio.trim()) return;
+    if (!textoLibre.trim()) return;
     setProcesando(true);
     setResultadoIA(null);
     setTimeout(() => {
@@ -387,7 +924,7 @@ function PublicarExcedente({ onPublicar }: { onPublicar: (e: Excedente) => void 
     if (!resultadoIA) return;
     onPublicar({
       id: Date.now().toString(),
-      comercio,
+      comercio: comercioNombre,
       descripcionOriginal: textoLibre,
       categoria: resultadoIA.categoria,
       cantidad: resultadoIA.cantidad,
@@ -396,7 +933,7 @@ function PublicarExcedente({ onPublicar }: { onPublicar: (e: Excedente) => void 
       estado: 'disponible',
     });
     setConfirmado(true);
-    setTimeout(() => { setTextoLibre(''); setComercio(''); setResultadoIA(null); setConfirmado(false); }, 3000);
+    setTimeout(() => { setTextoLibre(''); setResultadoIA(null); setConfirmado(false); }, 3000);
   };
 
   if (confirmado) {
@@ -426,15 +963,14 @@ function PublicarExcedente({ onPublicar }: { onPublicar: (e: Excedente) => void 
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-6 md:p-8">
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-stone-600 mb-2">Nombre del comercio</label>
-            <input
-              type="text"
-              value={comercio}
-              onChange={(e) => setComercio(e.target.value)}
-              placeholder="Ej: Panadería La Espiga Dorada"
-              className="w-full px-4 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none text-stone-800 placeholder:text-stone-300"
-            />
+          <div className="flex items-center gap-3 mb-6 pb-6 border-b border-stone-100">
+            <div className="w-10 h-10 rounded-xl bg-[#5a7a54]/10 flex items-center justify-center">
+              <Store className="w-5 h-5 text-[#5a7a54]" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-stone-800">{comercioNombre}</div>
+              <div className="text-xs text-stone-400">Publicando como tu comercio</div>
+            </div>
           </div>
 
           <div className="mb-6">
@@ -451,7 +987,7 @@ function PublicarExcedente({ onPublicar }: { onPublicar: (e: Excedente) => void 
 
           <button
             onClick={procesar}
-            disabled={!textoLibre.trim() || !comercio.trim() || procesando}
+            disabled={!textoLibre.trim() || procesando}
             className="w-full bg-[#5a7a54] hover:bg-[#4d6a48] disabled:bg-stone-200 disabled:text-stone-400 text-white py-3.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2.5 shadow-sm"
           >
             {procesando ? (
@@ -537,7 +1073,6 @@ function ExcedentesDisponibles({ excedentes }: { excedentes: Excedente[] }) {
           <p className="text-stone-400">Excedentes publicados por comercios locales de Villa Regina</p>
         </div>
 
-        {/* Filters */}
         <div className="flex flex-wrap gap-2 mb-8">
           {categorias.map((cat) => (
             <button
@@ -554,7 +1089,6 @@ function ExcedentesDisponibles({ excedentes }: { excedentes: Excedente[] }) {
           ))}
         </div>
 
-        {/* Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtrados.map((exc) => {
             const catConf = categoriaConfig[exc.categoria] || categoriaConfig['Varios'];
@@ -610,7 +1144,6 @@ function ExcedentesDisponibles({ excedentes }: { excedentes: Excedente[] }) {
           </div>
         )}
 
-        {/* Modal */}
         {mensajePreview && (
           <div className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setMensajePreview(null)}>
             <div className="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-2xl animate-fade-in-up" onClick={(e) => e.stopPropagation()}>
@@ -745,7 +1278,6 @@ function IASection() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Input */}
           <div className="bg-white rounded-2xl border border-stone-100 p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg bg-[#5a7a54]/10 flex items-center justify-center">
@@ -790,7 +1322,6 @@ function IASection() {
             </div>
           </div>
 
-          {/* Output */}
           <div className="bg-white rounded-2xl border border-stone-100 p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-lg bg-[#5a7a54]/10 flex items-center justify-center">
@@ -837,7 +1368,6 @@ function IASection() {
           </div>
         </div>
 
-        {/* Arquitectura */}
         <div className="mt-12 bg-white rounded-2xl border border-stone-100 p-6 md:p-8 shadow-sm">
           <h4 className="font-bold text-stone-800 text-xl mb-6">Arquitectura técnica</h4>
           <div className="grid md:grid-cols-3 gap-5">
@@ -909,8 +1439,24 @@ function Footer() {
 
 // ─── App ─────────────────────────────────────────────────
 export default function App() {
+  const [usuario, setUsuario] = useState<Usuario | null>(null);
+  const [comercio, setComercio] = useState<Comercio | null>(null);
   const [activeSection, setActiveSection] = useState('inicio');
   const [excedentes, setExcedentes] = useState<Excedente[]>(excedentesIniciales);
+
+  const handleLogin = (user: Usuario) => {
+    setUsuario(user);
+  };
+
+  const handleOnboardingComplete = (comercioData: Comercio) => {
+    setComercio(comercioData);
+  };
+
+  const handleLogout = () => {
+    setUsuario(null);
+    setComercio(null);
+    setActiveSection('inicio');
+  };
 
   const handlePublicar = (nuevo: Excedente) => {
     setExcedentes([nuevo, ...excedentes]);
@@ -918,15 +1464,31 @@ export default function App() {
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [activeSection]);
 
+  // No autenticado → pantalla de login
+  if (!usuario) {
+    return <AuthScreenComponent onLogin={handleLogin} />;
+  }
+
+  // Autenticado pero sin comercio → onboarding
+  if (!comercio) {
+    return <OnboardingScreen usuario={usuario} onComplete={handleOnboardingComplete} />;
+  }
+
+  // Todo completo → app
   return (
     <div className="min-h-screen bg-[#faf9f7]">
-      <Header activeSection={activeSection} setActiveSection={setActiveSection} />
+      <Header
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+        usuario={usuario}
+        comercio={comercio}
+        onLogout={handleLogout}
+      />
 
       {activeSection === 'inicio' && (
         <>
-          <HeroSection setActiveSection={setActiveSection} />
+          <HeroSection setActiveSection={setActiveSection} comercio={comercio} />
           <ComoFunciona />
-          {/* Últimos excedentes */}
           <section className="py-16 md:py-20 bg-[#faf9f7]">
             <div className="max-w-6xl mx-auto px-5 md:px-8">
               <div className="flex items-end justify-between mb-8">
@@ -964,17 +1526,12 @@ export default function App() {
                   );
                 })}
               </div>
-              <div className="text-center mt-8 sm:hidden">
-                <button onClick={() => setActiveSection('disponibles')} className="text-sm font-medium text-[#5a7a54]">
-                  Ver todos los excedentes →
-                </button>
-              </div>
             </div>
           </section>
         </>
       )}
 
-      {activeSection === 'publicar' && <PublicarExcedente onPublicar={handlePublicar} />}
+      {activeSection === 'publicar' && <PublicarExcedente onPublicar={handlePublicar} comercioNombre={comercio.nombre} />}
       {activeSection === 'disponibles' && <ExcedentesDisponibles excedentes={excedentes} />}
       {activeSection === 'comedores' && <ComedoresSection />}
       {activeSection === 'ia' && <IASection />}
