@@ -1,30 +1,72 @@
+import { useState, useEffect } from 'react';
 import { Package, TrendingUp, Users, Heart, ArrowRight, Calendar, Clock } from 'lucide-react';
+import { obtenerPublicacionesUsuario, obtenerNotificacionesUsuario, obtenerEstadisticasUsuario, type Publicacion, type Notificacion } from '../services';
 
 interface DashboardProps {
   comercioNombre: string;
+  usuarioId: string;
   setActiveSection: (section: string) => void;
 }
 
-export default function Dashboard({ comercioNombre, setActiveSection }: DashboardProps) {
-  // Datos simulados (en producción vendrían de Firebase)
-  const stats = {
-    publicacionesActivas: 3,
-    kgDonados: 156,
-    comedoresAyudados: 4,
-    entregasCompletadas: 28
+export default function Dashboard({ comercioNombre, usuarioId, setActiveSection }: DashboardProps) {
+  const [stats, setStats] = useState({
+    publicacionesActivas: 0,
+    kgDonados: 0,
+    entregasCompletadas: 0
+  });
+  const [publicacionesRecientes, setPublicacionesRecientes] = useState<Publicacion[]>([]);
+  const [notificacionesRecientes, setNotificacionesRecientes] = useState<Notificacion[]>([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    cargarDatos();
+  }, [usuarioId]);
+
+  const cargarDatos = async () => {
+    try {
+      setCargando(true);
+      
+      // Cargar estadísticas
+      const estadisticas = await obtenerEstadisticasUsuario(usuarioId);
+      setStats(estadisticas);
+      
+      // Cargar publicaciones recientes (últimas 3)
+      const publicaciones = await obtenerPublicacionesUsuario(usuarioId);
+      setPublicacionesRecientes(publicaciones.slice(0, 3));
+      
+      // Cargar notificaciones recientes (últimas 3)
+      const notificaciones = await obtenerNotificacionesUsuario(usuarioId);
+      setNotificacionesRecientes(notificaciones.slice(0, 3));
+    } catch (error) {
+      console.error('Error cargando datos del dashboard:', error);
+    } finally {
+      setCargando(false);
+    }
   };
 
-  const publicacionesRecientes = [
-    { id: '1', categoria: 'Panadería', cantidad: '30 facturas + 2 kg pan', estado: 'disponible', fecha: 'Hoy' },
-    { id: '2', categoria: 'Verduras', cantidad: '5 kg tomate + 3 kg zanahoria', estado: 'reservado', fecha: 'Ayer' },
-    { id: '3', categoria: 'Lácteos', cantidad: '10 litros de leche', estado: 'entregado', fecha: 'Hace 2 días' },
-  ];
+  const formatearFecha = (timestamp: any) => {
+    if (!timestamp) return 'Fecha desconocida';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(hours / 24);
 
-  const notificacionesRecientes = [
-    { id: '1', tipo: 'reserva', mensaje: 'Comedor Esperanza reservó tus facturas', tiempo: 'Hace 2 horas' },
-    { id: '2', tipo: 'entrega', mensaje: 'Entrega completada en Manos Solidarias', tiempo: 'Ayer' },
-    { id: '3', tipo: 'mensaje', mensaje: 'Nuevo mensaje de Merendero Gotitas', tiempo: 'Hace 2 días' },
-  ];
+    if (days > 0) return `Hace ${days} día${days > 1 ? 's' : ''}`;
+    if (hours > 0) return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
+    return 'Hoy';
+  };
+
+  if (cargando) {
+    return (
+      <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+        <div className="text-center py-16">
+          <div className="w-12 h-12 border-4 border-[#5a7a54] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-stone-500">Cargando tu panel...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
@@ -101,7 +143,7 @@ export default function Dashboard({ comercioNombre, setActiveSection }: Dashboar
               <Users className="w-5 h-5 text-purple-600" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-stone-800">{stats.comedoresAyudados}</div>
+          <div className="text-2xl font-bold text-stone-800">0</div>
           <div className="text-sm text-stone-500">Comedores ayudados</div>
         </div>
 
@@ -122,72 +164,99 @@ export default function Dashboard({ comercioNombre, setActiveSection }: Dashboar
         <div className="bg-white rounded-2xl border border-stone-200 p-6">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-semibold text-stone-800">Publicaciones recientes</h3>
-            <button
-              onClick={() => setActiveSection('mis-publicaciones')}
-              className="text-sm text-[#5a7a54] hover:underline flex items-center gap-1"
-            >
-              Ver todas
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            {publicacionesRecientes.length > 0 && (
+              <button
+                onClick={() => setActiveSection('mis-publicaciones')}
+                className="text-sm text-[#5a7a54] hover:underline flex items-center gap-1"
+              >
+                Ver todas
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
-          <div className="space-y-3">
-            {publicacionesRecientes.map((pub) => (
-              <div key={pub.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-stone-50 transition-colors">
-                <div className="w-10 h-10 bg-[#5a7a54]/10 rounded-xl flex items-center justify-center shrink-0">
-                  <Package className="w-5 h-5 text-[#5a7a54]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-stone-800 text-sm">{pub.categoria}</div>
-                  <div className="text-xs text-stone-500 truncate">{pub.cantidad}</div>
-                </div>
-                <div className="text-right">
-                  <div className={`text-xs font-medium px-2 py-1 rounded-full ${
-                    pub.estado === 'disponible' ? 'bg-green-100 text-green-700' :
-                    pub.estado === 'reservado' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-stone-100 text-stone-600'
-                  }`}>
-                    {pub.estado === 'disponible' ? 'Disponible' :
-                     pub.estado === 'reservado' ? 'Reservado' : 'Entregado'}
+          
+          {publicacionesRecientes.length > 0 ? (
+            <div className="space-y-3">
+              {publicacionesRecientes.map((pub) => (
+                <div key={pub.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-stone-50 transition-colors">
+                  <div className="w-10 h-10 bg-[#5a7a54]/10 rounded-xl flex items-center justify-center shrink-0">
+                    <Package className="w-5 h-5 text-[#5a7a54]" />
                   </div>
-                  <div className="text-xs text-stone-400 mt-1 flex items-center gap-1 justify-end">
-                    <Clock className="w-3 h-3" />
-                    {pub.fecha}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-stone-800 text-sm">{pub.categoria}</div>
+                    <div className="text-xs text-stone-500 truncate">{pub.cantidad}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-xs font-medium px-2 py-1 rounded-full ${
+                      pub.estado === 'disponible' ? 'bg-green-100 text-green-700' :
+                      pub.estado === 'reservado' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-stone-100 text-stone-600'
+                    }`}>
+                      {pub.estado === 'disponible' ? 'Disponible' :
+                       pub.estado === 'reservado' ? 'Reservado' : 'Entregado'}
+                    </div>
+                    <div className="text-xs text-stone-400 mt-1 flex items-center gap-1 justify-end">
+                      <Clock className="w-3 h-3" />
+                      {formatearFecha(pub.createdAt)}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Package className="w-12 h-12 text-stone-300 mx-auto mb-3" />
+              <p className="text-stone-500 text-sm mb-3">Todavía no tenés publicaciones</p>
+              <button
+                onClick={() => setActiveSection('publicar')}
+                className="text-sm text-[#5a7a54] hover:underline font-medium"
+              >
+                Publicar tu primer excedente →
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Recent notifications */}
         <div className="bg-white rounded-2xl border border-stone-200 p-6">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-lg font-semibold text-stone-800">Notificaciones</h3>
-            <button
-              onClick={() => setActiveSection('notificaciones')}
-              className="text-sm text-[#5a7a54] hover:underline flex items-center gap-1"
-            >
-              Ver todas
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            {notificacionesRecientes.length > 0 && (
+              <button
+                onClick={() => setActiveSection('notificaciones')}
+                className="text-sm text-[#5a7a54] hover:underline flex items-center gap-1"
+              >
+                Ver todas
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
-          <div className="space-y-3">
-            {notificacionesRecientes.map((notif) => (
-              <div key={notif.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-stone-50 transition-colors">
-                <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${
-                  notif.tipo === 'reserva' ? 'bg-yellow-500' :
-                  notif.tipo === 'entrega' ? 'bg-green-500' : 'bg-blue-500'
-                }`} />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm text-stone-800">{notif.mensaje}</div>
-                  <div className="text-xs text-stone-400 mt-1 flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    {notif.tiempo}
+          
+          {notificacionesRecientes.length > 0 ? (
+            <div className="space-y-3">
+              {notificacionesRecientes.map((notif) => (
+                <div key={notif.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-stone-50 transition-colors">
+                  <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${
+                    notif.tipo === 'reserva' ? 'bg-yellow-500' :
+                    notif.tipo === 'entrega' ? 'bg-green-500' :
+                    notif.tipo === 'publicacion' ? 'bg-purple-500' : 'bg-blue-500'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-stone-800">{notif.mensaje}</div>
+                    <div className="text-xs text-stone-400 mt-1 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {formatearFecha(notif.createdAt)}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Calendar className="w-12 h-12 text-stone-300 mx-auto mb-3" />
+              <p className="text-stone-500 text-sm">No tenés notificaciones aún</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

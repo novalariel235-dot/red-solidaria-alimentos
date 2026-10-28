@@ -1819,7 +1819,7 @@ export default function App() {
       <div className="lg:pl-64">
         <div key={activeSection} className="animate-fade-in">
           {activeSection === 'inicio' && (
-            <Dashboard comercioNombre={comercio.nombre} setActiveSection={setActiveSection} />
+            <Dashboard comercioNombre={comercio.nombre} usuarioId={usuario.uid} setActiveSection={setActiveSection} />
           )}
 
           {activeSection === 'publicar' && (
@@ -1832,7 +1832,7 @@ export default function App() {
           
           {activeSection === 'comedores' && <ComedoresModule />}
           
-          {activeSection === 'impacto' && <MiImpacto />}
+          {activeSection === 'impacto' && <MiImpacto usuarioId={usuario.uid} />}
           
           {activeSection === 'notificaciones' && <Notificaciones usuarioId={usuario.uid} />}
           
