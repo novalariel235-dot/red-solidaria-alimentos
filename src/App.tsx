@@ -39,6 +39,8 @@ import ComedoresModule from './components/Comedores';
 import MiImpacto from './components/MiImpacto';
 import Notificaciones from './components/Notificaciones';
 import Perfil from './components/Perfil';
+import Configuracion from './components/Configuracion';
+import { ThemeProvider } from './ThemeContext';
 
 // ─── Types ───────────────────────────────────────────────
 interface Excedente {
@@ -1666,6 +1668,14 @@ function Footer() {
 
 // ─── App ─────────────────────────────────────────────────
 export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
+}
+
+function AppContent() {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [comercio, setComercio] = useState<Comercio | null>(null);
   const [activeSection, setActiveSection] = useState('inicio');
@@ -1807,7 +1817,7 @@ export default function App() {
 
   // Todo completo → app
   return (
-    <div className="min-h-screen bg-[#faf9f7]">
+    <div className="min-h-screen bg-[#faf9f7] dark:bg-stone-900">
       <Sidebar
         activeSection={activeSection}
         setActiveSection={setActiveSection}
@@ -1838,6 +1848,8 @@ export default function App() {
           {activeSection === 'notificaciones' && <Notificaciones usuarioId={usuario.uid} />}
           
           {activeSection === 'perfil' && <Perfil comercio={comercio} />}
+          
+          {activeSection === 'configuracion' && <Configuracion />}
         </div>
       </div>
     </div>
