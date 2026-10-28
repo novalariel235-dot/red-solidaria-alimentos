@@ -1812,6 +1812,7 @@ export default function App() {
         activeSection={activeSection}
         setActiveSection={setActiveSection}
         comercioNombre={comercio.nombre}
+        usuarioId={usuario.uid}
         onLogout={handleLogout}
       />
 

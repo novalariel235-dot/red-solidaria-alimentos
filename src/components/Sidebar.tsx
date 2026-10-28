@@ -1,18 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Home, Package, ClipboardList, UtensilsCrossed, BarChart3,
   Bell, Settings, LogOut, Menu, X, HeartHandshake, ChevronRight
 } from 'lucide-react';
+import { obtenerNotificacionesUsuario } from '../services';
 
 interface SidebarProps {
   activeSection: string;
   setActiveSection: (section: string) => void;
   comercioNombre: string;
+  usuarioId: string;
   onLogout: () => void;
 }
 
-export default function Sidebar({ activeSection, setActiveSection, comercioNombre, onLogout }: SidebarProps) {
+export default function Sidebar({ activeSection, setActiveSection, comercioNombre, usuarioId, onLogout }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notificacionesNoLeidas, setNotificacionesNoLeidas] = useState(0);
+
+  useEffect(() => {
+    cargarNotificaciones();
+  }, [usuarioId]);
+
+  const cargarNotificaciones = async () => {
+    try {
+      const notificaciones = await obtenerNotificacionesUsuario(usuarioId);
+      const noLeidas = notificaciones.filter(n => !n.leida).length;
+      setNotificacionesNoLeidas(noLeidas);
+    } catch (error) {
+      console.error('Error cargando notificaciones en sidebar:', error);
+    }
+  };
 
   const menuItems = [
     { id: 'inicio', label: 'Home', icon: Home },
@@ -20,7 +37,7 @@ export default function Sidebar({ activeSection, setActiveSection, comercioNombr
     { id: 'mis-publicaciones', label: 'Mis Publicaciones', icon: ClipboardList },
     { id: 'comedores', label: 'Comedores', icon: UtensilsCrossed },
     { id: 'impacto', label: 'Mi Impacto', icon: BarChart3 },
-    { id: 'notificaciones', label: 'Notificaciones', icon: Bell, badge: 3 },
+    { id: 'notificaciones', label: 'Notificaciones', icon: Bell, badge: notificacionesNoLeidas },
     { id: 'perfil', label: 'Perfil', icon: Settings },
   ];
 
@@ -48,53 +65,61 @@ export default function Sidebar({ activeSection, setActiveSection, comercioNombr
       </div>
 
       {/* Mobile menu overlay */}
-      {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-30 bg-black/20 backdrop-blur-sm" onClick={() => setMobileOpen(false)}>
-          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="p-4 border-b border-stone-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#5a7a54] to-[#8faa88] flex items-center justify-center text-white font-bold">
-                  {comercioNombre.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <div className="font-semibold text-stone-800 text-sm">{comercioNombre}</div>
-                  <div className="text-xs text-stone-400">Comercio activo</div>
-                </div>
+      <div 
+        className={`lg:hidden fixed inset-0 z-30 transition-opacity duration-300 ${
+          mobileOpen ? 'bg-black/20 backdrop-blur-sm opacity-100' : 'bg-black/0 backdrop-blur-0 opacity-0 pointer-events-none'
+        }`} 
+        onClick={() => setMobileOpen(false)}
+      >
+        <div 
+          className={`absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl transition-transform duration-300 ease-out ${
+            mobileOpen ? 'translate-x-0' : '-translate-x-full'
+          }`} 
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-4 border-b border-stone-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#5a7a54] to-[#8faa88] flex items-center justify-center text-white font-bold">
+                {comercioNombre.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div className="font-semibold text-stone-800 text-sm">{comercioNombre}</div>
+                <div className="text-xs text-stone-400">Comercio activo</div>
               </div>
             </div>
-            <nav className="p-3 space-y-1">
-              {menuItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleNav(item.id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    activeSection === item.id
-                      ? 'bg-[#5a7a54]/10 text-[#5a7a54]'
-                      : 'text-stone-600 hover:bg-stone-50'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  {item.label}
-                  {item.badge && (
-                    <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </nav>
-            <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-stone-100">
+          </div>
+          <nav className="p-3 space-y-1">
+            {menuItems.map((item) => (
               <button
-                onClick={onLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
+                key={item.id}
+                onClick={() => handleNav(item.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                  activeSection === item.id
+                    ? 'bg-[#5a7a54]/10 text-[#5a7a54]'
+                    : 'text-stone-600 hover:bg-stone-50'
+                }`}
               >
-                <LogOut className="w-5 h-5" />
-                Cerrar sesión
+                <item.icon className="w-5 h-5" />
+                {item.label}
+                {item.badge && item.badge > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                    {item.badge}
+                  </span>
+                )}
               </button>
-            </div>
+            ))}
+          </nav>
+          <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-stone-100">
+            <button
+              onClick={onLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+              Cerrar sesión
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white border-r border-stone-200">
@@ -136,7 +161,7 @@ export default function Sidebar({ activeSection, setActiveSection, comercioNombr
             >
               <item.icon className="w-5 h-5" />
               <span className="flex-1 text-left">{item.label}</span>
-              {item.badge && (
+              {item.badge && item.badge > 0 && (
                 <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
                   {item.badge}
                 </span>
