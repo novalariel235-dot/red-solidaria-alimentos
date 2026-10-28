@@ -1167,57 +1167,57 @@ function PublicarExcedente({ onPublicar, comercioNombre }: { onPublicar: (e: Exc
 
   if (confirmado) {
     return (
-      <section className="py-20 min-h-screen flex items-center justify-center bg-[#faf9f7]">
+      <section className="py-20 min-h-screen flex items-center justify-center bg-[#faf9f7] dark:bg-stone-900">
         <div className="text-center animate-fade-in-up">
-          <div className="w-16 h-16 rounded-2xl bg-[#5a7a54]/10 flex items-center justify-center mx-auto mb-5">
-            <CheckCircle2 className="w-8 h-8 text-[#5a7a54]" />
+          <div className="w-16 h-16 rounded-2xl bg-[#5a7a54]/10 dark:bg-[#4a5d49]/20 flex items-center justify-center mx-auto mb-5">
+            <CheckCircle2 className="w-8 h-8 text-[#5a7a54] dark:text-[#8faa88]" />
           </div>
-          <h3 className="text-2xl font-bold text-stone-800 mb-2">¡Publicación exitosa!</h3>
-          <p className="text-stone-400">Los comedores cercanos serán notificados automáticamente.</p>
+          <h3 className="text-2xl font-bold text-stone-800 dark:text-stone-100 mb-2">¡Publicación exitosa!</h3>
+          <p className="text-stone-400 dark:text-stone-500">Los comedores cercanos serán notificados automáticamente.</p>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="py-16 md:py-20 min-h-screen bg-[#faf9f7]">
+    <section className="py-16 md:py-20 min-h-screen bg-[#faf9f7] dark:bg-stone-900">
       <div className="max-w-2xl mx-auto px-5 md:px-8">
         <div className="mb-10">
-          <div className="inline-flex items-center gap-2 text-[#5a7a54] text-sm font-medium mb-3">
+          <div className="inline-flex items-center gap-2 text-[#5a7a54] dark:text-[#8faa88] text-sm font-medium mb-3">
             <Package className="w-4 h-4" />
             Publicar
           </div>
-          <h3 className="text-3xl md:text-4xl font-bold text-stone-800 tracking-tight mb-2">¿Qué te sobró hoy?</h3>
-          <p className="text-stone-400">Escribí naturalmente. La IA se encarga de estructurar la información.</p>
+          <h3 className="text-3xl md:text-4xl font-bold text-stone-800 dark:text-stone-100 tracking-tight mb-2">¿Qué te sobró hoy?</h3>
+          <p className="text-stone-400 dark:text-stone-500">Escribí naturalmente. La IA se encarga de estructurar la información.</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-stone-100 p-6 md:p-8">
-          <div className="flex items-center gap-3 mb-6 pb-6 border-b border-stone-100">
-            <div className="w-10 h-10 rounded-xl bg-[#5a7a54]/10 flex items-center justify-center">
-              <Store className="w-5 h-5 text-[#5a7a54]" />
+        <div className="bg-white dark:bg-stone-800 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700 p-6 md:p-8">
+          <div className="flex items-center gap-3 mb-6 pb-6 border-b border-stone-100 dark:border-stone-700">
+            <div className="w-10 h-10 rounded-xl bg-[#5a7a54]/10 dark:bg-[#4a5d49]/20 flex items-center justify-center">
+              <Store className="w-5 h-5 text-[#5a7a54] dark:text-[#8faa88]" />
             </div>
             <div>
-              <div className="text-sm font-semibold text-stone-800">{comercioNombre}</div>
-              <div className="text-xs text-stone-400">Publicando como tu comercio</div>
+              <div className="text-sm font-semibold text-stone-800 dark:text-stone-100">{comercioNombre}</div>
+              <div className="text-xs text-stone-400 dark:text-stone-500">Publicando como tu comercio</div>
             </div>
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-stone-600 mb-2">Descripción libre</label>
+            <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Descripción libre</label>
             <textarea
               value={textoLibre}
               onChange={(e) => setTextoLibre(e.target.value)}
               placeholder='Ej: "Me sobran 30 facturas y 2 kilos de pan del día"'
               rows={4}
-              className="w-full px-4 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none resize-none text-stone-800 placeholder:text-stone-300"
+              className="w-full px-4 py-3 bg-[#faf9f7] dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-xl focus:border-[#5a7a54] dark:focus:border-[#8faa88] focus:ring-2 focus:ring-[#5a7a54]/10 dark:focus:ring-[#8faa88]/10 transition-all outline-none resize-none text-stone-800 dark:text-stone-100 placeholder:text-stone-300 dark:placeholder:text-stone-500"
             />
-            <p className="text-xs text-stone-400 mt-2">No importa el formato. Qwen lo estructura automáticamente.</p>
+            <p className="text-xs text-stone-400 dark:text-stone-500 mt-2">No importa el formato. Qwen lo estructura automáticamente.</p>
           </div>
 
           <button
             onClick={procesar}
             disabled={!textoLibre.trim() || procesando}
-            className="w-full bg-[#5a7a54] hover:bg-[#4d6a48] disabled:bg-stone-200 disabled:text-stone-400 text-white py-3.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2.5 shadow-sm"
+            className="w-full bg-[#5a7a54] dark:bg-[#4a5d49] hover:bg-[#4d6a48] dark:hover:bg-[#3d4d3c] disabled:bg-stone-200 dark:disabled:bg-stone-700 disabled:text-stone-400 dark:disabled:text-stone-500 text-white py-3.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2.5 shadow-sm"
           >
             {procesando ? (
               <>
@@ -1235,10 +1235,10 @@ function PublicarExcedente({ onPublicar, comercioNombre }: { onPublicar: (e: Exc
           {resultadoIA && (
             <div className="mt-6 animate-fade-in-up">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-lg bg-[#5a7a54]/10 flex items-center justify-center">
-                  <Bot className="w-3.5 h-3.5 text-[#5a7a54]" />
+                <div className="w-6 h-6 rounded-lg bg-[#5a7a54]/10 dark:bg-[#4a5d49]/20 flex items-center justify-center">
+                  <Bot className="w-3.5 h-3.5 text-[#5a7a54] dark:text-[#8faa88]" />
                 </div>
-                <span className="text-sm font-medium text-stone-600">Resultado de Qwen AI</span>
+                <span className="text-sm font-medium text-stone-600 dark:text-stone-300">Resultado de Qwen AI</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
@@ -1247,24 +1247,24 @@ function PublicarExcedente({ onPublicar, comercioNombre }: { onPublicar: (e: Exc
                   { label: 'Cantidad', value: resultadoIA.cantidad, icon: Package },
                   { label: 'Vencimiento', value: resultadoIA.vencimientoEstimado, icon: Clock },
                 ].map((item, i) => (
-                  <div key={i} className="bg-[#f5f8f4] rounded-xl p-3.5 border border-[#e4ede2]">
+                  <div key={i} className="bg-[#f5f8f4] dark:bg-stone-700 rounded-xl p-3.5 border border-[#e4ede2] dark:border-stone-600">
                     <div className="flex items-center gap-1.5 mb-1">
                       <item.icon className="w-3.5 h-3.5 text-[#8faa88]" />
-                      <span className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">{item.label}</span>
+                      <span className="text-[10px] uppercase tracking-wider text-stone-400 dark:text-stone-500 font-medium">{item.label}</span>
                     </div>
-                    <div className="text-sm font-semibold text-stone-800">{item.value}</div>
+                    <div className="text-sm font-semibold text-stone-800 dark:text-stone-100">{item.value}</div>
                   </div>
                 ))}
               </div>
 
-              <div className="bg-stone-50 rounded-xl p-3 mb-4 border border-stone-100">
-                <span className="text-[10px] uppercase tracking-wider text-stone-400 font-medium">Texto original</span>
-                <p className="text-sm text-stone-500 italic mt-0.5">"{textoLibre}"</p>
+              <div className="bg-stone-50 dark:bg-stone-700 rounded-xl p-3 mb-4 border border-stone-100 dark:border-stone-600">
+                <span className="text-[10px] uppercase tracking-wider text-stone-400 dark:text-stone-500 font-medium">Texto original</span>
+                <p className="text-sm text-stone-500 dark:text-stone-400 italic mt-0.5">"{textoLibre}"</p>
               </div>
 
               <button
                 onClick={confirmarPublicacion}
-                className="w-full bg-stone-800 hover:bg-stone-900 text-white py-3.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                className="w-full bg-stone-800 dark:bg-stone-700 hover:bg-stone-900 dark:hover:bg-stone-600 text-white py-3.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 Confirmar y publicar
