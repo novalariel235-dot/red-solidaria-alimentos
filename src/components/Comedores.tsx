@@ -46,7 +46,10 @@ export default function Comedores() {
       {/* Lista de comedores */}
       <div className="grid md:grid-cols-2 gap-4">
         {comedores.map((comedor) => {
-          const ocupacion = Math.round((comedor.personasAtendidas / comedor.capacidad) * 100);
+          // Validar que los valores sean números válidos
+          const capacidad = Number(comedor.capacidad) || 0;
+          const personasAtendidas = Number(comedor.personasAtendidas) || 0;
+          const ocupacion = capacidad > 0 ? Math.round((personasAtendidas / capacidad) * 100) : 0;
           
           return (
             <div key={comedor.id} className="bg-white rounded-2xl border border-stone-200 p-6 hover:shadow-lg transition-all">
@@ -73,7 +76,7 @@ export default function Comedores() {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-stone-600">
                   <Users className="w-4 h-4 text-stone-400 shrink-0" />
-                  <span>{comedor.personasAtendidas} / {comedor.capacidad} personas</span>
+                  <span>{personasAtendidas} / {capacidad} personas</span>
                 </div>
               </div>
 
