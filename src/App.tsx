@@ -21,6 +21,13 @@ import {
 } from './firebase';
 import AddressPicker from './components/AddressPicker';
 import SchedulePicker from './components/SchedulePicker';
+import Sidebar from './components/Sidebar';
+import Dashboard from './components/Dashboard';
+import MisPublicaciones from './components/MisPublicaciones';
+import ComedoresModule from './components/Comedores';
+import MiImpacto from './components/MiImpacto';
+import Notificaciones from './components/Notificaciones';
+import Perfil from './components/Perfil';
 
 // ─── Types ───────────────────────────────────────────────
 interface Excedente {
@@ -1761,66 +1768,35 @@ export default function App() {
   // Todo completo → app
   return (
     <div className="min-h-screen bg-[#faf9f7]">
-      <Header
+      <Sidebar
         activeSection={activeSection}
         setActiveSection={setActiveSection}
-        usuario={usuario}
-        comercio={comercio}
+        comercioNombre={comercio.nombre}
         onLogout={handleLogout}
       />
 
-      {activeSection === 'inicio' && (
-        <>
-          <HeroSection setActiveSection={setActiveSection} comercio={comercio} />
-          <ComoFunciona />
-          <section className="py-16 md:py-20 bg-[#faf9f7]">
-            <div className="max-w-6xl mx-auto px-5 md:px-8">
-              <div className="flex items-end justify-between mb-8">
-                <div>
-                  <h3 className="text-2xl md:text-3xl font-bold text-stone-800 tracking-tight">Últimas publicaciones</h3>
-                  <p className="text-stone-400 mt-1">Excedentes recién publicados por comercios locales</p>
-                </div>
-                <button
-                  onClick={() => setActiveSection('disponibles')}
-                  className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-[#5a7a54] hover:text-[#4d6a48] transition-colors"
-                >
-                  Ver todos
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="grid md:grid-cols-3 gap-5">
-                {excedentes.slice(0, 3).map((exc) => {
-                  const catConf = categoriaConfig[exc.categoria] || categoriaConfig['Varios'];
-                  return (
-                    <div key={exc.id} className="bg-white rounded-2xl p-5 border border-stone-100 hover:border-stone-200 hover:shadow-lg hover:shadow-stone-100/50 transition-all duration-300">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-9 h-9 rounded-lg bg-stone-50 border border-stone-100 flex items-center justify-center">
-                          <Store className="w-4 h-4 text-stone-400" />
-                        </div>
-                        <span className="font-medium text-stone-700 text-sm">{exc.comercio}</span>
-                      </div>
-                      <p className="text-sm text-stone-400 italic mb-3 line-clamp-2">"{exc.descripcionOriginal}"</p>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`px-2 py-0.5 rounded-md text-xs font-medium border ${catConf.bg} ${catConf.color}`}>
-                          {exc.categoria}
-                        </span>
-                        <span className="text-xs text-stone-400">{exc.cantidad}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        </>
-      )}
+      {/* Main content with sidebar */}
+      <div className="lg:pl-64">
+        {activeSection === 'inicio' && (
+          <Dashboard comercioNombre={comercio.nombre} setActiveSection={setActiveSection} />
+        )}
 
-      {activeSection === 'publicar' && <PublicarExcedente onPublicar={handlePublicar} comercioNombre={comercio.nombre} />}
-      {activeSection === 'disponibles' && <ExcedentesDisponibles excedentes={excedentes} />}
-      {activeSection === 'comedores' && <ComedoresSection />}
-      {activeSection === 'ia' && <IASection />}
+        {activeSection === 'publicar' && (
+          <div className="p-6 lg:p-8">
+            <PublicarExcedente onPublicar={handlePublicar} comercioNombre={comercio.nombre} />
+          </div>
+        )}
 
-      <Footer />
+        {activeSection === 'mis-publicaciones' && <MisPublicaciones />}
+        
+        {activeSection === 'comedores' && <ComedoresModule />}
+        
+        {activeSection === 'impacto' && <MiImpacto />}
+        
+        {activeSection === 'notificaciones' && <Notificaciones />}
+        
+        {activeSection === 'perfil' && <Perfil comercio={comercio} />}
+      </div>
     </div>
   );
 }

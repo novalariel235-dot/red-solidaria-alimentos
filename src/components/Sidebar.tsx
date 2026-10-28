@@ -1,0 +1,164 @@
+import { useState } from 'react';
+import {
+  Home, Package, ClipboardList, UtensilsCrossed, BarChart3,
+  Bell, Settings, LogOut, Menu, X, HeartHandshake, ChevronRight
+} from 'lucide-react';
+
+interface SidebarProps {
+  activeSection: string;
+  setActiveSection: (section: string) => void;
+  comercioNombre: string;
+  onLogout: () => void;
+}
+
+export default function Sidebar({ activeSection, setActiveSection, comercioNombre, onLogout }: SidebarProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const menuItems = [
+    { id: 'inicio', label: 'Home', icon: Home },
+    { id: 'publicar', label: 'Publicar', icon: Package },
+    { id: 'mis-publicaciones', label: 'Mis Publicaciones', icon: ClipboardList },
+    { id: 'comedores', label: 'Comedores', icon: UtensilsCrossed },
+    { id: 'impacto', label: 'Mi Impacto', icon: BarChart3 },
+    { id: 'notificaciones', label: 'Notificaciones', icon: Bell, badge: 3 },
+    { id: 'perfil', label: 'Perfil', icon: Settings },
+  ];
+
+  const handleNav = (id: string) => {
+    setActiveSection(id);
+    setMobileOpen(false);
+  };
+
+  return (
+    <>
+      {/* Mobile header */}
+      <div className="lg:hidden sticky top-0 z-40 bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#5a7a54] to-[#8faa88] flex items-center justify-center">
+            <HeartHandshake className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-semibold text-stone-800 text-sm">{comercioNombre}</span>
+        </div>
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="p-2 rounded-lg hover:bg-stone-100 transition-colors"
+        >
+          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </div>
+
+      {/* Mobile menu overlay */}
+      {mobileOpen && (
+        <div className="lg:hidden fixed inset-0 z-30 bg-black/20 backdrop-blur-sm" onClick={() => setMobileOpen(false)}>
+          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-stone-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#5a7a54] to-[#8faa88] flex items-center justify-center text-white font-bold">
+                  {comercioNombre.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="font-semibold text-stone-800 text-sm">{comercioNombre}</div>
+                  <div className="text-xs text-stone-400">Comercio activo</div>
+                </div>
+              </div>
+            </div>
+            <nav className="p-3 space-y-1">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleNav(item.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                    activeSection === item.id
+                      ? 'bg-[#5a7a54]/10 text-[#5a7a54]'
+                      : 'text-stone-600 hover:bg-stone-50'
+                  }`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  {item.label}
+                  {item.badge && (
+                    <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </nav>
+            <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-stone-100">
+              <button
+                onClick={onLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
+              >
+                <LogOut className="w-5 h-5" />
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white border-r border-stone-200">
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-6 py-5 border-b border-stone-100">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#5a7a54] to-[#8faa88] flex items-center justify-center shadow-sm">
+            <HeartHandshake className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-stone-800 leading-tight">Red Solidaria</div>
+            <div className="text-[10px] text-stone-400 uppercase tracking-wider">Villa Regina</div>
+          </div>
+        </div>
+
+        {/* User info */}
+        <div className="px-4 py-4 border-b border-stone-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#5a7a54] to-[#8faa88] flex items-center justify-center text-white font-bold">
+              {comercioNombre.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-stone-800 truncate">{comercioNombre}</div>
+              <div className="text-xs text-stone-400">Comercio activo</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => handleNav(item.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all group ${
+                activeSection === item.id
+                  ? 'bg-[#5a7a54]/10 text-[#5a7a54]'
+                  : 'text-stone-600 hover:bg-stone-50 hover:text-stone-800'
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="flex-1 text-left">{item.label}</span>
+              {item.badge && (
+                <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  {item.badge}
+                </span>
+              )}
+              {activeSection === item.id && (
+                <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+              )}
+            </button>
+          ))}
+        </nav>
+
+        {/* Logout */}
+        <div className="px-3 py-4 border-t border-stone-100">
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
+          >
+            <LogOut className="w-5 h-5" />
+            Cerrar sesión
+          </button>
+        </div>
+      </aside>
+    </>
+  );
+}
