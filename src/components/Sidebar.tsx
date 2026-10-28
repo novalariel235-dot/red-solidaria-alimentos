@@ -89,7 +89,7 @@ export default function Sidebar({ activeSection, setActiveSection, comercioNombr
               </div>
             </div>
           </div>
-          <nav className="p-3 space-y-1">
+          <nav className="p-3 space-y-1 overflow-y-auto pb-20">
             {menuItems.map((item) => (
               <button
                 key={item.id}
@@ -109,16 +109,18 @@ export default function Sidebar({ activeSection, setActiveSection, comercioNombr
                 )}
               </button>
             ))}
+            
+            {/* Logout - integrado en el flujo */}
+            <div className="pt-4 mt-4 border-t border-stone-100 dark:border-stone-700">
+              <button
+                onClick={onLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+              >
+                <LogOut className="w-5 h-5" />
+                Cerrar sesión
+              </button>
+            </div>
           </nav>
-          <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-stone-100 dark:border-stone-700">
-            <button
-              onClick={onLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
-            >
-              <LogOut className="w-5 h-5" />
-              Cerrar sesión
-            </button>
-          </div>
         </div>
       </div>
 
@@ -172,18 +174,18 @@ export default function Sidebar({ activeSection, setActiveSection, comercioNombr
               )}
             </button>
           ))}
+          
+          {/* Logout - integrado en el flujo */}
+          <div className="pt-4 mt-4 border-t border-stone-100 dark:border-stone-700">
+            <button
+              onClick={onLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+              Cerrar sesión
+            </button>
+          </div>
         </nav>
-
-        {/* Logout */}
-        <div className="px-3 py-4 border-t border-stone-100 dark:border-stone-700">
-          <button
-            onClick={onLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
-          >
-            <LogOut className="w-5 h-5" />
-            Cerrar sesión
-          </button>
-        </div>
       </aside>
     </>
   );
