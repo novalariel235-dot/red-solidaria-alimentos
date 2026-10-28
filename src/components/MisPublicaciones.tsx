@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { Package, Calendar, Clock, Edit2, Trash2, Eye } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { obtenerPublicacionesUsuario, type Publicacion } from '../services';
 
 interface MisPublicacionesProps {
@@ -7,8 +7,8 @@ interface MisPublicacionesProps {
 }
 
 export default function MisPublicaciones({ usuarioId }: MisPublicacionesProps) {
-  const [filtro, setFiltro] = useState<'todas' | 'disponible' | 'reservado' | 'entregado'>('todas');
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
+  const [filtro, setFiltro] = useState<string>('todas');
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
@@ -37,18 +37,12 @@ export default function MisPublicaciones({ usuarioId }: MisPublicacionesProps) {
     return date.toLocaleDateString('es-AR');
   };
 
-  const estadoColors = {
-    disponible: 'bg-green-100 text-green-700 border-green-200',
-    reservado: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-    entregado: 'bg-stone-100 text-stone-600 border-stone-200'
-  };
-
   if (cargando) {
     return (
       <div className="p-6 lg:p-8 max-w-7xl mx-auto">
         <div className="text-center py-16">
-          <div className="w-12 h-12 border-4 border-[#5a7a54] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-stone-500">Cargando publicaciones...</p>
+          <div className="w-12 h-12 border-4 border-[#5a7a54] dark:border-[#8faa88] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-stone-500 dark:text-stone-400">Cargando publicaciones...</p>
         </div>
       </div>
     );
@@ -56,101 +50,89 @@ export default function MisPublicaciones({ usuarioId }: MisPublicacionesProps) {
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-stone-800 mb-2">Mis Publicaciones</h1>
-        <p className="text-stone-500">
-          Gestioná tus publicaciones de excedentes
-        </p>
+        <h1 className="text-3xl font-bold text-stone-800 dark:text-stone-100 mb-2">Mis Publicaciones</h1>
+        <p className="text-stone-500 dark:text-stone-400">Gestioná tus publicaciones de excedentes</p>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2 mb-6">
-        {[
-          { id: 'todas', label: 'Todas', count: publicaciones.length },
-          { id: 'disponible', label: 'Disponibles', count: publicaciones.filter(p => p.estado === 'disponible').length },
-          { id: 'reservado', label: 'Reservadas', count: publicaciones.filter(p => p.estado === 'reservado').length },
-          { id: 'entregado', label: 'Entregadas', count: publicaciones.filter(p => p.estado === 'entregado').length },
-        ].map((f) => (
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+        {['todas', 'disponible', 'reservado', 'entregado'].map((estado) => (
           <button
-            key={f.id}
-            onClick={() => setFiltro(f.id as any)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-              filtro === f.id
-                ? 'bg-[#5a7a54] text-white shadow-sm'
-                : 'bg-white text-stone-600 border border-stone-200 hover:border-[#5a7a54]'
+            key={estado}
+            onClick={() => setFiltro(estado)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+              filtro === estado
+                ? 'bg-[#5a7a54] dark:bg-[#4a5d49] text-white'
+                : 'bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 hover:border-[#5a7a54] dark:hover:border-[#8faa88]'
             }`}
           >
-            {f.label} ({f.count})
+            {estado === 'todas' ? 'Todas' : estado.charAt(0).toUpperCase() + estado.slice(1)}
           </button>
         ))}
       </div>
 
-      {/* Publications list */}
-      <div className="space-y-4">
-        {publicacionesFiltradas.map((pub) => (
-          <div key={pub.id} className="bg-white rounded-2xl border border-stone-200 p-6 hover:shadow-lg transition-all">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-[#5a7a54]/10 rounded-xl flex items-center justify-center shrink-0">
-                  <Package className="w-6 h-6 text-[#5a7a54]" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-stone-800 text-lg mb-1">{pub.categoria}</h3>
-                  <p className="text-stone-600 text-sm mb-2">{pub.descripcion}</p>
-                  <div className="flex items-center gap-4 text-sm text-stone-500">
-                    <span className="flex items-center gap-1">
-                      <Package className="w-4 h-4" />
-                      {pub.cantidad}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      Vence en {pub.vencimientoEstimado}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {formatearFecha(pub.createdAt)}
-                    </span>
+      {publicacionesFiltradas.length === 0 ? (
+        <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-12 text-center">
+          <Package className="w-16 h-16 text-stone-300 dark:text-stone-600 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-stone-800 dark:text-stone-100 mb-2">No hay publicaciones</h3>
+          <p className="text-stone-500 dark:text-stone-400">Todavía no tenés publicaciones en esta categoría</p>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {publicacionesFiltradas.map((pub) => (
+            <div key={pub.id} className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-6 hover:shadow-lg transition-all">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-[#5a7a54]/10 dark:bg-[#4a5d49]/20 rounded-xl flex items-center justify-center shrink-0">
+                    <Package className="w-6 h-6 text-[#5a7a54] dark:text-[#8faa88]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-stone-800 dark:text-stone-100 text-lg mb-1">{pub.categoria}</h3>
+                    <p className="text-stone-600 dark:text-stone-300 text-sm mb-2">{pub.descripcion}</p>
+                    <div className="flex items-center gap-4 text-sm text-stone-500 dark:text-stone-400">
+                      <span className="flex items-center gap-1">
+                        <Package className="w-4 h-4" />
+                        {pub.cantidad}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        Vence en {pub.vencimientoEstimado}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        {formatearFecha(pub.createdAt)}
+                      </span>
+                    </div>
                   </div>
                 </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                  pub.estado === 'disponible' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-900' :
+                  pub.estado === 'reservado' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-900' :
+                  'bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-400 border-stone-200 dark:border-stone-600'
+                }`}>
+                  {pub.estado === 'disponible' ? 'Disponible' :
+                   pub.estado === 'reservado' ? 'Reservado' : 'Entregado'}
+                </span>
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${estadoColors[pub.estado]}`}>
-                {pub.estado === 'disponible' ? 'Disponible' :
-                 pub.estado === 'reservado' ? 'Reservado' : 'Entregado'}
-              </span>
+
+              {pub.estado !== 'entregado' && (
+                <div className="flex items-center gap-2 pt-4 border-t border-stone-100 dark:border-stone-700">
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-700 transition-all">
+                    <Eye className="w-4 h-4" />
+                    Ver detalles
+                  </button>
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[#5a7a54] dark:text-[#8faa88] hover:bg-[#5a7a54]/5 dark:hover:bg-[#4a5d49]/20 transition-all">
+                    <Edit2 className="w-4 h-4" />
+                    Editar
+                  </button>
+                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">
+                    <Trash2 className="w-4 h-4" />
+                    Eliminar
+                  </button>
+                </div>
+              )}
             </div>
-
-            {/* Actions */}
-            {pub.estado !== 'entregado' && (
-              <div className="flex items-center gap-2 pt-4 border-t border-stone-100">
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-stone-600 hover:bg-stone-50 transition-all">
-                  <Eye className="w-4 h-4" />
-                  Ver detalles
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[#5a7a54] hover:bg-[#5a7a54]/5 transition-all">
-                  <Edit2 className="w-4 h-4" />
-                  Editar
-                </button>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all">
-                  <Trash2 className="w-4 h-4" />
-                  Eliminar
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {publicacionesFiltradas.length === 0 && (
-        <div className="text-center py-16">
-          <Package className="w-16 h-16 text-stone-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-stone-600 mb-2">No hay publicaciones</h3>
-          <p className="text-stone-400">
-            {filtro === 'todas' 
-              ? 'Todavía no publicaste ningún excedente'
-              : `No tenés publicaciones ${filtro === 'disponible' ? 'disponibles' : filtro === 'reservado' ? 'reservadas' : 'entregadas'}`
-            }
-          </p>
+          ))}
         </div>
       )}
     </div>

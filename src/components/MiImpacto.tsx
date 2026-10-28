@@ -23,7 +23,6 @@ export default function MiImpacto({ usuarioId }: MiImpactoProps) {
     try {
       setCargando(true);
       
-      // Cargar estadísticas
       const estadisticas = await obtenerEstadisticasUsuario(usuarioId);
       setStats({
         totalKgDonados: estadisticas.kgDonados,
@@ -31,7 +30,6 @@ export default function MiImpacto({ usuarioId }: MiImpactoProps) {
         publicacionesActivas: estadisticas.publicacionesActivas
       });
       
-      // Cargar historial de entregas (publicaciones con estado 'entregado')
       const publicaciones = await obtenerPublicacionesUsuario(usuarioId);
       const entregas = publicaciones.filter(p => p.estado === 'entregado');
       setHistorialEntregas(entregas);
@@ -48,8 +46,7 @@ export default function MiImpacto({ usuarioId }: MiImpactoProps) {
     return date.toLocaleDateString('es-AR');
   };
 
-  // Calcular días activo (simplificado - en producción guardar fecha de registro)
-  const diasActivo = 1; // Placeholder
+  const diasActivo = 1;
 
   const logros = [
     { id: '1', titulo: 'Primera donación', descripcion: 'Realizaste tu primera donación', desbloqueado: stats.totalEntregas >= 1 },
@@ -63,8 +60,8 @@ export default function MiImpacto({ usuarioId }: MiImpactoProps) {
     return (
       <div className="p-6 lg:p-8 max-w-7xl mx-auto">
         <div className="text-center py-16">
-          <div className="w-12 h-12 border-4 border-[#5a7a54] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-stone-500">Cargando tu impacto...</p>
+          <div className="w-12 h-12 border-4 border-[#5a7a54] dark:border-[#8faa88] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-stone-500 dark:text-stone-400">Cargando tu impacto...</p>
         </div>
       </div>
     );
@@ -72,93 +69,87 @@ export default function MiImpacto({ usuarioId }: MiImpactoProps) {
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-stone-800 mb-2">Mi Impacto</h1>
-        <p className="text-stone-500">
-          Mirá el impacto positivo que estás generando en tu comunidad
-        </p>
+        <h1 className="text-3xl font-bold text-stone-800 dark:text-stone-100 mb-2">Mi Impacto</h1>
+        <p className="text-stone-500 dark:text-stone-400">Mirá el impacto positivo que estás generando en tu comunidad</p>
       </div>
 
-      {/* Stats principales */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border border-green-200">
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-6 rounded-2xl border border-green-200 dark:border-green-900">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
-              <TrendingUp className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 bg-white dark:bg-stone-800 rounded-xl flex items-center justify-center shadow-sm">
+              <TrendingUp className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
-          <div className="text-3xl font-bold text-stone-800 mb-1">{stats.totalKgDonados} kg</div>
-          <div className="text-sm text-stone-600">Alimentos donados</div>
+          <div className="text-3xl font-bold text-stone-800 dark:text-stone-100 mb-1">{stats.totalKgDonados} kg</div>
+          <div className="text-sm text-stone-600 dark:text-stone-400">Alimentos donados</div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-50 to-sky-50 p-6 rounded-2xl border border-blue-200">
+        <div className="bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-900/20 dark:to-sky-900/20 p-6 rounded-2xl border border-blue-200 dark:border-blue-900">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
-              <Package className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-white dark:bg-stone-800 rounded-xl flex items-center justify-center shadow-sm">
+              <Package className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
-          <div className="text-3xl font-bold text-stone-800 mb-1">{stats.totalEntregas}</div>
-          <div className="text-sm text-stone-600">Entregas completadas</div>
+          <div className="text-3xl font-bold text-stone-800 dark:text-stone-100 mb-1">{stats.totalEntregas}</div>
+          <div className="text-sm text-stone-600 dark:text-stone-400">Entregas completadas</div>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-50 to-violet-50 p-6 rounded-2xl border border-purple-200">
+        <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 p-6 rounded-2xl border border-purple-200 dark:border-purple-900">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
-              <Package className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 bg-white dark:bg-stone-800 rounded-xl flex items-center justify-center shadow-sm">
+              <Package className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
-          <div className="text-3xl font-bold text-stone-800 mb-1">{stats.publicacionesActivas}</div>
-          <div className="text-sm text-stone-600">Publicaciones activas</div>
+          <div className="text-3xl font-bold text-stone-800 dark:text-stone-100 mb-1">{stats.publicacionesActivas}</div>
+          <div className="text-sm text-stone-600 dark:text-stone-400">Publicaciones activas</div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-6 rounded-2xl border border-orange-200">
+        <div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 p-6 rounded-2xl border border-orange-200 dark:border-orange-900">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm">
-              <Calendar className="w-6 h-6 text-orange-600" />
+            <div className="w-12 h-12 bg-white dark:bg-stone-800 rounded-xl flex items-center justify-center shadow-sm">
+              <Calendar className="w-6 h-6 text-orange-600 dark:text-orange-400" />
             </div>
           </div>
-          <div className="text-3xl font-bold text-stone-800 mb-1">{diasActivo}</div>
-          <div className="text-sm text-stone-600">Días activo</div>
+          <div className="text-3xl font-bold text-stone-800 dark:text-stone-100 mb-1">{diasActivo}</div>
+          <div className="text-sm text-stone-600 dark:text-stone-400">Días activo</div>
         </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Historial de entregas */}
-        <div className="bg-white rounded-2xl border border-stone-200 p-6">
-          <h3 className="text-lg font-semibold text-stone-800 mb-5 flex items-center gap-2">
-            <Package className="w-5 h-5 text-[#5a7a54]" />
+        <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-6">
+          <h3 className="text-lg font-semibold text-stone-800 dark:text-stone-100 mb-5 flex items-center gap-2">
+            <Package className="w-5 h-5 text-[#5a7a54] dark:text-[#8faa88]" />
             Historial de entregas
           </h3>
           
           {historialEntregas.length > 0 ? (
             <div className="space-y-3">
               {historialEntregas.map((entrega) => (
-                <div key={entrega.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-stone-50 transition-colors">
-                  <div className="w-10 h-10 bg-[#5a7a54]/10 rounded-xl flex items-center justify-center shrink-0">
-                    <Heart className="w-5 h-5 text-[#5a7a54]" />
+                <div key={entrega.id} className="flex items-center gap-4 p-3 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors">
+                  <div className="w-10 h-10 bg-[#5a7a54]/10 dark:bg-[#4a5d49]/20 rounded-xl flex items-center justify-center shrink-0">
+                    <Heart className="w-5 h-5 text-[#5a7a54] dark:text-[#8faa88]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-stone-800 text-sm">{entrega.comedorNombre || 'Comedor'}</div>
-                    <div className="text-xs text-stone-500">{entrega.categoria} · {entrega.cantidad}</div>
+                    <div className="font-medium text-stone-800 dark:text-stone-100 text-sm">{entrega.comedorNombre || 'Comedor'}</div>
+                    <div className="text-xs text-stone-500 dark:text-stone-400">{entrega.categoria} · {entrega.cantidad}</div>
                   </div>
-                  <div className="text-xs text-stone-400">{formatearFecha(entrega.createdAt)}</div>
+                  <div className="text-xs text-stone-400 dark:text-stone-500">{formatearFecha(entrega.createdAt)}</div>
                 </div>
               ))}
             </div>
           ) : (
             <div className="text-center py-8">
-              <Package className="w-12 h-12 text-stone-300 mx-auto mb-3" />
-              <p className="text-stone-500 text-sm">Todavía no completaste entregas</p>
-              <p className="text-stone-400 text-xs mt-1">Cuando un comedor retire tus alimentos, aparecerá aquí</p>
+              <Package className="w-12 h-12 text-stone-300 dark:text-stone-600 mx-auto mb-3" />
+              <p className="text-stone-500 dark:text-stone-400 text-sm">Todavía no completaste entregas</p>
+              <p className="text-stone-400 dark:text-stone-500 text-xs mt-1">Cuando un comedor retire tus alimentos, aparecerá aquí</p>
             </div>
           )}
         </div>
 
-        {/* Logros */}
-        <div className="bg-white rounded-2xl border border-stone-200 p-6">
-          <h3 className="text-lg font-semibold text-stone-800 mb-5 flex items-center gap-2">
-            <Award className="w-5 h-5 text-[#5a7a54]" />
+        <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-6">
+          <h3 className="text-lg font-semibold text-stone-800 dark:text-stone-100 mb-5 flex items-center gap-2">
+            <Award className="w-5 h-5 text-[#5a7a54] dark:text-[#8faa88]" />
             Logros desbloqueados
           </h3>
           <div className="space-y-3">
@@ -167,23 +158,23 @@ export default function MiImpacto({ usuarioId }: MiImpactoProps) {
                 key={logro.id}
                 className={`flex items-center gap-4 p-4 rounded-xl border transition-all ${
                   logro.desbloqueado
-                    ? 'bg-gradient-to-r from-[#f5f8f4] to-white border-[#c8d5c3]'
-                    : 'bg-stone-50 border-stone-200 opacity-60'
+                    ? 'bg-gradient-to-r from-[#f5f8f4] to-white dark:from-[#4a5d49]/20 dark:to-stone-800 border-[#c8d5c3] dark:border-[#4a5d49]'
+                    : 'bg-stone-50 dark:bg-stone-700 border-stone-200 dark:border-stone-600 opacity-60'
                 }`}
               >
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
                   logro.desbloqueado
-                    ? 'bg-gradient-to-br from-[#5a7a54] to-[#8faa88] text-white'
-                    : 'bg-stone-200 text-stone-400'
+                    ? 'bg-gradient-to-br from-[#5a7a54] to-[#8faa88] dark:from-[#4a5d49] dark:to-[#6b7d6a] text-white'
+                    : 'bg-stone-200 dark:bg-stone-600 text-stone-400 dark:text-stone-500'
                 }`}>
                   <Award className="w-6 h-6" />
                 </div>
                 <div className="flex-1">
-                  <div className="font-semibold text-stone-800 text-sm">{logro.titulo}</div>
-                  <div className="text-xs text-stone-500">{logro.descripcion}</div>
+                  <div className="font-semibold text-stone-800 dark:text-stone-100 text-sm">{logro.titulo}</div>
+                  <div className="text-xs text-stone-500 dark:text-stone-400">{logro.descripcion}</div>
                 </div>
                 {logro.desbloqueado && (
-                  <div className="text-xs font-medium text-[#5a7a54] bg-[#5a7a54]/10 px-2 py-1 rounded-full">
+                  <div className="text-xs font-medium text-[#5a7a54] dark:text-[#8faa88] bg-[#5a7a54]/10 dark:bg-[#4a5d49]/20 px-2 py-1 rounded-full">
                     ✓ Desbloqueado
                   </div>
                 )}

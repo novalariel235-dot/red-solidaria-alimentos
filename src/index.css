@@ -28,6 +28,25 @@
   }
 }
 
+/* Colores personalizados para modo oscuro */
+@layer utilities {
+  .dark .bg-\[\#5a7a54\] {
+    background-color: #4a5d49;
+  }
+  
+  .dark .hover\:bg-\[\#4d6a48\]:hover {
+    background-color: #3d4d3c;
+  }
+  
+  .dark .text-\[\#5a7a54\] {
+    color: #8faa88;
+  }
+  
+  .dark .border-\[\#5a7a54\] {
+    border-color: #4a5d49;
+  }
+}
+
 @layer utilities {
   .font-serif {
     font-family: 'Playfair Display', Georgia, serif;
