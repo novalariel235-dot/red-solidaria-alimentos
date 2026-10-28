@@ -1,53 +1,37 @@
+import { useState, useEffect } from 'react';
 import { MapPin, Phone, Users, Navigation } from 'lucide-react';
+import { obtenerComedores, type Comedor } from '../services';
 
 export default function Comedores() {
-  // Datos simulados de comedores
-  const comedores = [
-    {
-      id: '1',
-      nombre: 'Comedor Manos Solidarias',
-      direccion: 'Av. San Martín 450',
-      telefono: '+54 294 455-1234',
-      lat: -39.0035,
-      lng: -67.0549,
-      capacidad: 80,
-      personasAtendidas: 65,
-      distancia: '1.2 km'
-    },
-    {
-      id: '2',
-      nombre: 'Comedor Esperanza',
-      direccion: 'Calle Mitre 1200',
-      telefono: '+54 294 455-5678',
-      lat: -39.0100,
-      lng: -67.0600,
-      capacidad: 50,
-      personasAtendidas: 42,
-      distancia: '2.5 km'
-    },
-    {
-      id: '3',
-      nombre: 'Merendero Gotitas de Amor',
-      direccion: 'Barrio Centro 320',
-      telefono: '+54 294 455-9012',
-      lat: -38.9950,
-      lng: -67.0500,
-      capacidad: 30,
-      personasAtendidas: 28,
-      distancia: '0.8 km'
-    },
-    {
-      id: '4',
-      nombre: 'Comedor Nuevo Amanecer',
-      direccion: 'Calle Belgrano 890',
-      telefono: '+54 294 455-3456',
-      lat: -39.0150,
-      lng: -67.0700,
-      capacidad: 100,
-      personasAtendidas: 78,
-      distancia: '3.1 km'
+  const [comedores, setComedores] = useState<Comedor[]>([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    cargarComedores();
+  }, []);
+
+  const cargarComedores = async () => {
+    try {
+      setCargando(true);
+      const data = await obtenerComedores();
+      setComedores(data);
+    } catch (error) {
+      console.error('Error cargando comedores:', error);
+    } finally {
+      setCargando(false);
     }
-  ];
+  };
+
+  if (cargando) {
+    return (
+      <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+        <div className="text-center py-16">
+          <div className="w-12 h-12 border-4 border-[#5a7a54] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-stone-500">Cargando comedores...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
@@ -57,21 +41,6 @@ export default function Comedores() {
         <p className="text-stone-500">
           Conocé los comedores comunitarios de Villa Regina y contactalos directamente
         </p>
-      </div>
-
-      {/* Mapa */}
-      <div className="bg-white rounded-2xl border border-stone-200 p-6 mb-8">
-        <h3 className="text-lg font-semibold text-stone-800 mb-4 flex items-center gap-2">
-          <MapPin className="w-5 h-5 text-[#5a7a54]" />
-          Mapa de comedores
-        </h3>
-        <div className="bg-gradient-to-br from-[#f5f8f4] to-[#eef2ec] rounded-xl h-64 flex items-center justify-center border border-stone-200">
-          <div className="text-center">
-            <MapPin className="w-12 h-12 text-[#5a7a54] mx-auto mb-2" />
-            <p className="text-stone-600 font-medium">Mapa interactivo</p>
-            <p className="text-sm text-stone-400">Los comedores aparecen marcados en el mapa</p>
-          </div>
-        </div>
       </div>
 
       {/* Lista de comedores */}
@@ -84,10 +53,6 @@ export default function Comedores() {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h3 className="font-semibold text-stone-800 text-lg mb-1">{comedor.nombre}</h3>
-                  <div className="flex items-center gap-1 text-sm text-stone-500 mb-1">
-                    <Navigation className="w-3.5 h-3.5" />
-                    {comedor.distancia} de distancia
-                  </div>
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-[#5a7a54]">{ocupacion}%</div>
@@ -130,7 +95,7 @@ export default function Comedores() {
                   rel="noopener noreferrer"
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-[#5a7a54]/10 text-[#5a7a54] hover:bg-[#5a7a54]/20 transition-all"
                 >
-                  <MapPin className="w-4 h-4" />
+                  <Navigation className="w-4 h-4" />
                   Ver en mapa
                 </a>
                 <a
@@ -145,6 +110,16 @@ export default function Comedores() {
           );
         })}
       </div>
+
+      {comedores.length === 0 && (
+        <div className="text-center py-16">
+          <MapPin className="w-16 h-16 text-stone-300 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-stone-600 mb-2">No hay comedores registrados</h3>
+          <p className="text-stone-400">
+            Pronto se agregarán comedores comunitarios de Villa Regina
+          </p>
+        </div>
+      )}
     </div>
   );
 }

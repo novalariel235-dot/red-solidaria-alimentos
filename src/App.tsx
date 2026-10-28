@@ -19,6 +19,17 @@ import {
   type Usuario,
   type Comercio
 } from './firebase';
+import {
+  crearPublicacion,
+  crearNotificacion,
+  obtenerPublicacionesUsuario,
+  obtenerNotificacionesUsuario,
+  obtenerComedores,
+  obtenerEstadisticasUsuario,
+  type Publicacion,
+  type Comedor as ComedorDB,
+  type Notificacion
+} from './services';
 import AddressPicker from './components/AddressPicker';
 import SchedulePicker from './components/SchedulePicker';
 import Sidebar from './components/Sidebar';
@@ -1715,8 +1726,37 @@ export default function App() {
     setShowLanding(true);
   };
 
-  const handlePublicar = (nuevo: Excedente) => {
-    setExcedentes([nuevo, ...excedentes]);
+  const handlePublicar = async (nuevo: Excedente) => {
+    if (!usuario || !comercio) return;
+    
+    try {
+      // Guardar en Firebase
+      await crearPublicacion(
+        usuario.uid,
+        comercio.nombre,
+        {
+          categoria: nuevo.categoria,
+          cantidad: nuevo.cantidad,
+          descripcion: nuevo.descripcionOriginal,
+          vencimientoEstimado: nuevo.vencimientoEstimado
+        }
+      );
+      
+      // Crear notificación para el usuario
+      await crearNotificacion(
+        usuario.uid,
+        'publicacion',
+        'Publicación creada',
+        `Tu publicación de ${nuevo.categoria} fue creada exitosamente`
+      );
+      
+      // Actualizar estado local
+      setExcedentes([nuevo, ...excedentes]);
+    } catch (error) {
+      console.error('Error publicando:', error);
+      // En caso de error, igual actualizar localmente para que el usuario vea el cambio
+      setExcedentes([nuevo, ...excedentes]);
+    }
   };
 
   const handleLandingNavigate = (screen: 'login' | 'register') => {
@@ -1777,25 +1817,27 @@ export default function App() {
 
       {/* Main content with sidebar */}
       <div className="lg:pl-64">
-        {activeSection === 'inicio' && (
-          <Dashboard comercioNombre={comercio.nombre} setActiveSection={setActiveSection} />
-        )}
+        <div key={activeSection} className="animate-fade-in">
+          {activeSection === 'inicio' && (
+            <Dashboard comercioNombre={comercio.nombre} setActiveSection={setActiveSection} />
+          )}
 
-        {activeSection === 'publicar' && (
-          <div className="p-6 lg:p-8">
-            <PublicarExcedente onPublicar={handlePublicar} comercioNombre={comercio.nombre} />
-          </div>
-        )}
+          {activeSection === 'publicar' && (
+            <div className="p-6 lg:p-8">
+              <PublicarExcedente onPublicar={handlePublicar} comercioNombre={comercio.nombre} />
+            </div>
+          )}
 
-        {activeSection === 'mis-publicaciones' && <MisPublicaciones />}
-        
-        {activeSection === 'comedores' && <ComedoresModule />}
-        
-        {activeSection === 'impacto' && <MiImpacto />}
-        
-        {activeSection === 'notificaciones' && <Notificaciones />}
-        
-        {activeSection === 'perfil' && <Perfil comercio={comercio} />}
+          {activeSection === 'mis-publicaciones' && <MisPublicaciones usuarioId={usuario.uid} />}
+          
+          {activeSection === 'comedores' && <ComedoresModule />}
+          
+          {activeSection === 'impacto' && <MiImpacto />}
+          
+          {activeSection === 'notificaciones' && <Notificaciones usuarioId={usuario.uid} />}
+          
+          {activeSection === 'perfil' && <Perfil comercio={comercio} />}
+        </div>
       </div>
     </div>
   );

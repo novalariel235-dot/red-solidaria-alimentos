@@ -1,49 +1,30 @@
+import { useState, useEffect } from 'react';
 import { Bell, Calendar, Check, MessageCircle, Package, Users } from 'lucide-react';
+import { obtenerNotificacionesUsuario, type Notificacion } from '../services';
 
-export default function Notificaciones() {
-  // Datos simulados de notificaciones
-  const notificaciones = [
-    {
-      id: '1',
-      tipo: 'reserva',
-      titulo: 'Nueva reserva',
-      mensaje: 'Comedor Esperanza reservó tus facturas',
-      tiempo: 'Hace 2 horas',
-      leida: false
-    },
-    {
-      id: '2',
-      tipo: 'entrega',
-      titulo: 'Entrega completada',
-      mensaje: 'Entrega completada en Manos Solidarias',
-      tiempo: 'Ayer',
-      leida: false
-    },
-    {
-      id: '3',
-      tipo: 'mensaje',
-      titulo: 'Nuevo mensaje',
-      mensaje: 'Merendero Gotitas de Amor te envió un mensaje',
-      tiempo: 'Hace 2 días',
-      leida: false
-    },
-    {
-      id: '4',
-      tipo: 'publicacion',
-      titulo: 'Publicación vista',
-      mensaje: 'Tu publicación de verduras fue vista 15 veces',
-      tiempo: 'Hace 3 días',
-      leida: true
-    },
-    {
-      id: '5',
-      tipo: 'sistema',
-      titulo: 'Bienvenido',
-      mensaje: '¡Gracias por unirte a la Red Solidaria!',
-      tiempo: 'Hace 1 semana',
-      leida: true
+interface NotificacionesProps {
+  usuarioId: string;
+}
+
+export default function Notificaciones({ usuarioId }: NotificacionesProps) {
+  const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    cargarNotificaciones();
+  }, [usuarioId]);
+
+  const cargarNotificaciones = async () => {
+    try {
+      setCargando(true);
+      const data = await obtenerNotificacionesUsuario(usuarioId);
+      setNotificaciones(data);
+    } catch (error) {
+      console.error('Error cargando notificaciones:', error);
+    } finally {
+      setCargando(false);
     }
-  ];
+  };
 
   const getIcon = (tipo: string) => {
     switch (tipo) {
@@ -67,7 +48,31 @@ export default function Notificaciones() {
     }
   };
 
+  const formatearTiempo = (timestamp: any) => {
+    if (!timestamp) return 'Fecha desconocida';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `Hace ${days} día${days > 1 ? 's' : ''}`;
+    if (hours > 0) return `Hace ${hours} hora${hours > 1 ? 's' : ''}`;
+    return 'Hace menos de una hora';
+  };
+
   const noLeidas = notificaciones.filter(n => !n.leida).length;
+
+  if (cargando) {
+    return (
+      <div className="p-6 lg:p-8 max-w-4xl mx-auto">
+        <div className="text-center py-16">
+          <div className="w-12 h-12 border-4 border-[#5a7a54] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-stone-500">Cargando notificaciones...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-8 max-w-4xl mx-auto">
@@ -113,7 +118,7 @@ export default function Notificaciones() {
                   <p className="text-stone-600 text-sm mb-2">{notif.mensaje}</p>
                   <div className="flex items-center gap-1 text-xs text-stone-400">
                     <Calendar className="w-3 h-3" />
-                    {notif.tiempo}
+                    {formatearTiempo(notif.createdAt)}
                   </div>
                 </div>
               </div>

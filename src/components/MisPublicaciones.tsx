@@ -1,58 +1,58 @@
+import { useState, useEffect } from 'react';
 import { Package, Calendar, Clock, Edit2, Trash2, Eye } from 'lucide-react';
-import { useState } from 'react';
+import { obtenerPublicacionesUsuario, type Publicacion } from '../services';
 
-export default function MisPublicaciones() {
+interface MisPublicacionesProps {
+  usuarioId: string;
+}
+
+export default function MisPublicaciones({ usuarioId }: MisPublicacionesProps) {
   const [filtro, setFiltro] = useState<'todas' | 'disponible' | 'reservado' | 'entregado'>('todas');
+  const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
+  const [cargando, setCargando] = useState(true);
 
-  // Datos simulados
-  const publicaciones = [
-    {
-      id: '1',
-      categoria: 'Panadería',
-      cantidad: '30 facturas + 2 kg pan',
-      descripcion: 'Me sobran 30 facturas y 2 kilos de pan del día',
-      estado: 'disponible' as const,
-      fecha: '2026-01-15',
-      vencimiento: '24 horas'
-    },
-    {
-      id: '2',
-      categoria: 'Verduras',
-      cantidad: '5 kg tomate + 3 kg zanahoria',
-      descripcion: 'Tengo como 5 kg de tomate y 3 kg de zanahoria que no vendí hoy',
-      estado: 'reservado' as const,
-      fecha: '2026-01-14',
-      vencimiento: '2-3 días'
-    },
-    {
-      id: '3',
-      categoria: 'Lácteos',
-      cantidad: '10 litros de leche',
-      descripcion: 'Quedan 10 litros de leche que vencen mañana',
-      estado: 'entregado' as const,
-      fecha: '2026-01-13',
-      vencimiento: '1 día'
-    },
-    {
-      id: '4',
-      categoria: 'Frutas',
-      cantidad: '8 manzanas + 6 bananas',
-      descripcion: 'Me quedaron 8 manzanas y 6 bananas que no se vendieron hoy',
-      estado: 'disponible' as const,
-      fecha: '2026-01-15',
-      vencimiento: '2-4 días'
+  useEffect(() => {
+    cargarPublicaciones();
+  }, [usuarioId]);
+
+  const cargarPublicaciones = async () => {
+    try {
+      setCargando(true);
+      const data = await obtenerPublicacionesUsuario(usuarioId);
+      setPublicaciones(data);
+    } catch (error) {
+      console.error('Error cargando publicaciones:', error);
+    } finally {
+      setCargando(false);
     }
-  ];
+  };
 
   const publicacionesFiltradas = filtro === 'todas' 
     ? publicaciones 
     : publicaciones.filter(p => p.estado === filtro);
+
+  const formatearFecha = (timestamp: any) => {
+    if (!timestamp) return 'Fecha desconocida';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('es-AR');
+  };
 
   const estadoColors = {
     disponible: 'bg-green-100 text-green-700 border-green-200',
     reservado: 'bg-yellow-100 text-yellow-700 border-yellow-200',
     entregado: 'bg-stone-100 text-stone-600 border-stone-200'
   };
+
+  if (cargando) {
+    return (
+      <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+        <div className="text-center py-16">
+          <div className="w-12 h-12 border-4 border-[#5a7a54] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-stone-500">Cargando publicaciones...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto">
@@ -105,11 +105,11 @@ export default function MisPublicaciones() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      Vence en {pub.vencimiento}
+                      Vence en {pub.vencimientoEstimado}
                     </span>
                     <span className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
-                      {pub.fecha}
+                      {formatearFecha(pub.createdAt)}
                     </span>
                   </div>
                 </div>
