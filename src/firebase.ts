@@ -84,9 +84,13 @@ export interface Comercio {
   nombre: string;
   tipo: string;
   direccion: string;
+  lat?: number;
+  lng?: number;
   telefono: string;
   descripcion: string;
-  horarioRetiro: string;
+  diasRetiro: string[];
+  horarioDesde: string;
+  horarioHasta: string;
 }
 
 // ─── Auth Functions ──────────────────────────────────────
@@ -214,9 +218,13 @@ export async function obtenerComercio(uid: string): Promise<Comercio | null> {
       nombre: data.nombre || '',
       tipo: data.tipo || '',
       direccion: data.direccion || '',
+      lat: data.lat || undefined,
+      lng: data.lng || undefined,
       telefono: data.telefono || '',
       descripcion: data.descripcion || '',
-      horarioRetiro: data.horarioRetiro || ''
+      diasRetiro: data.diasRetiro || [],
+      horarioDesde: data.horarioDesde || '',
+      horarioHasta: data.horarioHasta || ''
     };
   }
   return null;

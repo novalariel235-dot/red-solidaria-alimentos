@@ -5,7 +5,7 @@ import {
   Send, ChevronRight, Sparkles, Store, Users, Recycle,
   TrendingUp, MessageCircle, FileText, Brain, Database,
   Server, Wifi, CircleDot, Play, Mail, Lock, User,
-  Eye, EyeOff, ArrowLeft, Building2, Truck, Globe
+  Eye, EyeOff, ArrowLeft, Building2, Truck, Globe, Navigation
 } from 'lucide-react';
 import {
   isFirebaseConfigured,
@@ -19,6 +19,8 @@ import {
   type Usuario,
   type Comercio
 } from './firebase';
+import AddressPicker from './components/AddressPicker';
+import SchedulePicker from './components/SchedulePicker';
 
 // ─── Types ───────────────────────────────────────────────
 interface Excedente {
@@ -516,16 +518,20 @@ function OnboardingScreen({ usuario, onComplete }: { usuario: Usuario; onComplet
     nombre: '',
     tipo: '',
     direccion: '',
+    lat: undefined,
+    lng: undefined,
     telefono: '',
     descripcion: '',
-    horarioRetiro: ''
+    diasRetiro: [],
+    horarioDesde: '',
+    horarioHasta: ''
   });
   const [loading, setLoading] = useState(false);
 
   const totalSteps = 3;
   const canNext = () => {
     if (step === 1) return comercio.nombre && comercio.tipo;
-    if (step === 2) return comercio.direccion && comercio.telefono;
+    if (step === 2) return comercio.direccion && comercio.lat && comercio.lng && comercio.telefono && comercio.diasRetiro.length > 0 && comercio.horarioDesde && comercio.horarioHasta;
     return true;
   };
 
@@ -536,7 +542,7 @@ function OnboardingScreen({ usuario, onComplete }: { usuario: Usuario; onComplet
 
   return (
     <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center p-6">
-      <div className="w-full max-w-lg">
+      <div className="w-full max-w-2xl">
         {/* Progress */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-3">
@@ -603,21 +609,14 @@ function OnboardingScreen({ usuario, onComplete }: { usuario: Usuario; onComplet
               <h3 className="text-2xl font-bold text-stone-800 tracking-tight mb-2">Ubicación y contacto</h3>
               <p className="text-stone-400 text-sm mb-6">Para que los comedores puedan retirarlo fácilmente.</p>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-stone-600 mb-1.5">Dirección</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" />
-                    <input
-                      type="text"
-                      value={comercio.direccion}
-                      onChange={(e) => setComercio({...comercio, direccion: e.target.value})}
-                      placeholder="Av. San Martín 123, Villa Regina"
-                      className="w-full pl-10 pr-4 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none text-stone-800 placeholder:text-stone-300 text-sm"
-                    />
-                  </div>
-                </div>
+              <div className="space-y-6">
+                {/* Dirección con mapa */}
+                <AddressPicker
+                  value={{ direccion: comercio.direccion, lat: comercio.lat, lng: comercio.lng }}
+                  onChange={(addr) => setComercio({...comercio, direccion: addr.direccion, lat: addr.lat, lng: addr.lng})}
+                />
 
+                {/* Teléfono */}
                 <div>
                   <label className="block text-sm font-medium text-stone-600 mb-1.5">Teléfono de contacto</label>
                   <div className="relative">
@@ -632,19 +631,19 @@ function OnboardingScreen({ usuario, onComplete }: { usuario: Usuario; onComplet
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-stone-600 mb-1.5">Horario de retiro</label>
-                  <div className="relative">
-                    <Clock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" />
-                    <input
-                      type="text"
-                      value={comercio.horarioRetiro}
-                      onChange={(e) => setComercio({...comercio, horarioRetiro: e.target.value})}
-                      placeholder="Ej: Lunes a viernes, 18 a 20hs"
-                      className="w-full pl-10 pr-4 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none text-stone-800 placeholder:text-stone-300 text-sm"
-                    />
-                  </div>
-                </div>
+                {/* Horario */}
+                <SchedulePicker
+                  value={{ 
+                    dias: comercio.diasRetiro, 
+                    horario: { desde: comercio.horarioDesde, hasta: comercio.horarioHasta }
+                  }}
+                  onChange={(sched) => setComercio({
+                    ...comercio, 
+                    diasRetiro: sched.dias,
+                    horarioDesde: sched.horario.desde,
+                    horarioHasta: sched.horario.hasta
+                  })}
+                />
               </div>
             </div>
           )}
@@ -678,14 +677,29 @@ function OnboardingScreen({ usuario, onComplete }: { usuario: Usuario; onComplet
                       <span className="font-medium">{comercio.nombre || '—'}</span>
                       <span className="text-stone-400">· {comercio.tipo || '—'}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-stone-600">
-                      <MapPin className="w-3.5 h-3.5 text-stone-400" />
-                      {comercio.direccion || '—'}
+                    <div className="flex items-start gap-2 text-stone-600">
+                      <MapPin className="w-3.5 h-3.5 text-stone-400 mt-0.5 shrink-0" />
+                      <div>
+                        <div>{comercio.direccion || '—'}</div>
+                        {comercio.lat && comercio.lng && (
+                          <div className="text-xs text-stone-400 mt-0.5">
+                            📍 Coordenadas validadas: {comercio.lat.toFixed(5)}, {comercio.lng.toFixed(5)}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 text-stone-600">
                       <Phone className="w-3.5 h-3.5 text-stone-400" />
                       {comercio.telefono || '—'}
                     </div>
+                    {comercio.diasRetiro.length > 0 && (
+                      <div className="flex items-start gap-2 text-stone-600">
+                        <Clock className="w-3.5 h-3.5 text-stone-400 mt-0.5 shrink-0" />
+                        <span>
+                          {comercio.diasRetiro.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(', ')} · {comercio.horarioDesde} a {comercio.horarioHasta}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -826,9 +840,22 @@ function Header({ activeSection, setActiveSection, usuario, comercio, onLogout }
                         <Store className="w-3.5 h-3.5 text-stone-400" />
                         {comercio.nombre}
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-stone-400 mt-1">
-                        <MapPin className="w-3 h-3" />
-                        {comercio.direccion}
+                      <div className="flex items-start gap-2 text-xs text-stone-400 mt-1">
+                        <MapPin className="w-3 h-3 mt-0.5 shrink-0" />
+                        <div>
+                          <div>{comercio.direccion}</div>
+                          {comercio.lat && comercio.lng && (
+                            <a
+                              href={`https://www.google.com/maps?q=${comercio.lat},${comercio.lng}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#5a7a54] hover:underline inline-flex items-center gap-1 mt-0.5"
+                            >
+                              Ver en Google Maps
+                              <Navigation className="w-2.5 h-2.5" />
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <button
