@@ -125,7 +125,10 @@ function GoogleIcon() {
 }
 
 // ─── Landing / Splash Screen ─────────────────────────────
-function LandingScreen({ onNavigate }: { onNavigate: (screen: 'login' | 'register') => void }) {
+function LandingScreen({ onNavigate, usuarioLogueado }: { 
+  onNavigate: (screen: 'login' | 'register') => void;
+  usuarioLogueado?: boolean;
+}) {
   return (
     <div className="min-h-screen bg-[#faf9f7] flex flex-col relative overflow-hidden">
       {/* Background decorations */}
@@ -196,19 +199,33 @@ function LandingScreen({ onNavigate }: { onNavigate: (screen: 'login' | 'registe
 
         {/* Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm animate-fade-in-delay-3">
-          <button
-            onClick={() => onNavigate('login')}
-            className="flex-1 flex items-center justify-center gap-2 bg-[#5a7a54] hover:bg-[#4d6a48] text-white px-7 py-4 rounded-xl font-semibold text-base shadow-lg shadow-[#5a7a54]/20 hover:shadow-xl hover:shadow-[#5a7a54]/30 transition-all duration-300 group"
-          >
-            Iniciar sesión
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-          </button>
-          <button
-            onClick={() => onNavigate('register')}
-            className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-stone-50 text-stone-700 px-7 py-4 rounded-xl font-semibold text-base border border-stone-200 shadow-sm hover:shadow-md transition-all duration-300"
-          >
-            Crear cuenta
-          </button>
+          {usuarioLogueado ? (
+            // Si ya está logueado pero falta el comercio, mostrar botón para continuar
+            <button
+              onClick={() => onNavigate('login')}
+              className="flex-1 flex items-center justify-center gap-2 bg-[#5a7a54] hover:bg-[#4d6a48] text-white px-7 py-4 rounded-xl font-semibold text-base shadow-lg shadow-[#5a7a54]/20 hover:shadow-xl hover:shadow-[#5a7a54]/30 transition-all duration-300 group"
+            >
+              Completar perfil
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          ) : (
+            // Si no está logueado, mostrar botones de login/registro
+            <>
+              <button
+                onClick={() => onNavigate('login')}
+                className="flex-1 flex items-center justify-center gap-2 bg-[#5a7a54] hover:bg-[#4d6a48] text-white px-7 py-4 rounded-xl font-semibold text-base shadow-lg shadow-[#5a7a54]/20 hover:shadow-xl hover:shadow-[#5a7a54]/30 transition-all duration-300 group"
+              >
+                Iniciar sesión
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+              <button
+                onClick={() => onNavigate('register')}
+                className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-stone-50 text-stone-700 px-7 py-4 rounded-xl font-semibold text-base border border-stone-200 shadow-sm hover:shadow-md transition-all duration-300"
+              >
+                Crear cuenta
+              </button>
+            </>
+          )}
         </div>
 
         {/* Footer note */}
@@ -1696,6 +1713,11 @@ export default function App() {
   };
 
   const handleLandingNavigate = (screen: 'login' | 'register') => {
+    // Si ya hay sesión activa pero falta el comercio, ir directo al onboarding
+    if (usuario && !comercio) {
+      setShowLanding(false);
+      return;
+    }
     setAuthScreen(screen);
     setShowLanding(false);
   };
@@ -1721,8 +1743,9 @@ export default function App() {
   }
 
   // Landing → pantalla de presentación
-  if (showLanding && !usuario) {
-    return <LandingScreen onNavigate={handleLandingNavigate} />;
+  // Mostrar landing si: showLanding es true Y (no hay usuario O no hay comercio)
+  if (showLanding && (!usuario || !comercio)) {
+    return <LandingScreen onNavigate={handleLandingNavigate} usuarioLogueado={!!usuario} />;
   }
 
   // No autenticado → pantalla de login/registro
