@@ -73,7 +73,7 @@ export default function Sidebar({ activeSection, setActiveSection, comercioNombr
         onClick={() => setMobileOpen(false)}
       >
         <div 
-          className={`absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-stone-800 shadow-xl transition-transform duration-300 ease-out ${
+          className={`absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-stone-800 shadow-xl transition-transform duration-300 ease-out flex flex-col ${
             mobileOpen ? 'translate-x-0' : '-translate-x-full'
           }`} 
           onClick={(e) => e.stopPropagation()}
@@ -89,7 +89,7 @@ export default function Sidebar({ activeSection, setActiveSection, comercioNombr
               </div>
             </div>
           </div>
-          <nav className="p-3 space-y-1 overflow-y-auto pb-20">
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
             {menuItems.map((item) => (
               <button
                 key={item.id}
@@ -109,18 +109,18 @@ export default function Sidebar({ activeSection, setActiveSection, comercioNombr
                 )}
               </button>
             ))}
-            
-            {/* Logout - integrado en el flujo */}
-            <div className="pt-4 mt-4 border-t border-stone-100 dark:border-stone-700">
-              <button
-                onClick={onLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
-              >
-                <LogOut className="w-5 h-5" />
-                Cerrar sesión
-              </button>
-            </div>
           </nav>
+          
+          {/* Logout - siempre visible al final */}
+          <div className="p-3 border-t border-stone-100 dark:border-stone-700">
+            <button
+              onClick={onLogout}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+              Cerrar sesión
+            </button>
+          </div>
         </div>
       </div>
 
@@ -174,18 +174,18 @@ export default function Sidebar({ activeSection, setActiveSection, comercioNombr
               )}
             </button>
           ))}
-          
-          {/* Logout - integrado en el flujo */}
-          <div className="pt-4 mt-4 border-t border-stone-100 dark:border-stone-700">
-            <button
-              onClick={onLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
-            >
-              <LogOut className="w-5 h-5" />
-              Cerrar sesión
-            </button>
-          </div>
         </nav>
+
+        {/* Logout - siempre visible al final */}
+        <div className="px-3 py-4 border-t border-stone-100 dark:border-stone-700">
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+          >
+            <LogOut className="w-5 h-5" />
+            Cerrar sesión
+          </button>
+        </div>
       </aside>
     </>
   );
