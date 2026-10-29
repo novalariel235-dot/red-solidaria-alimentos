@@ -5,7 +5,7 @@ import {
   Send, ChevronRight, Sparkles, Store, Users, Recycle,
   TrendingUp, MessageCircle, FileText, Brain, Database,
   Server, Wifi, CircleDot, Play, Mail, Lock, User,
-  Eye, EyeOff, ArrowLeft, Building2, Truck, Globe, Navigation
+  Eye, EyeOff, ArrowLeft, Building2, Truck, Globe, Navigation, AlertCircle
 } from 'lucide-react';
 import {
   isFirebaseConfigured,
@@ -1137,32 +1137,60 @@ function PublicarExcedente({ onPublicar, comercioNombre }: { onPublicar: (e: Exc
   const [textoLibre, setTextoLibre] = useState('');
   const [procesando, setProcesando] = useState(false);
   const [resultadoIA, setResultadoIA] = useState<{ categoria: string; cantidad: string; vencimientoEstimado: string } | null>(null);
+  const [resultadoEditado, setResultadoEditado] = useState<{ categoria: string; cantidad: string; vencimientoEstimado: string } | null>(null);
   const [confirmado, setConfirmado] = useState(false);
+  const [error, setError] = useState('');
 
   const procesar = () => {
-    if (!textoLibre.trim()) return;
+    setError('');
+    if (!textoLibre.trim()) {
+      setError('Por favor, describí qué alimentos te sobraron');
+      return;
+    }
+    if (textoLibre.trim().length < 10) {
+      setError('La descripción es muy corta. Intentá ser más específico/a');
+      return;
+    }
+    
     setProcesando(true);
     setResultadoIA(null);
+    setResultadoEditado(null);
+    
     setTimeout(() => {
-      setResultadoIA(procesarConIA(textoLibre));
+      const resultado = procesarConIA(textoLibre);
+      setResultadoIA(resultado);
+      setResultadoEditado(resultado);
       setProcesando(false);
     }, 1500);
   };
 
   const confirmarPublicacion = () => {
-    if (!resultadoIA) return;
+    if (!resultadoEditado) return;
     onPublicar({
       id: Date.now().toString(),
       comercio: comercioNombre,
       descripcionOriginal: textoLibre,
-      categoria: resultadoIA.categoria,
-      cantidad: resultadoIA.cantidad,
-      vencimientoEstimado: resultadoIA.vencimientoEstimado,
+      categoria: resultadoEditado.categoria,
+      cantidad: resultadoEditado.cantidad,
+      vencimientoEstimado: resultadoEditado.vencimientoEstimado,
       fechaPublicacion: new Date().toISOString().split('T')[0],
       estado: 'disponible',
     });
     setConfirmado(true);
-    setTimeout(() => { setTextoLibre(''); setResultadoIA(null); setConfirmado(false); }, 3000);
+    setTimeout(() => { 
+      setTextoLibre(''); 
+      setResultadoIA(null); 
+      setResultadoEditado(null);
+      setConfirmado(false); 
+      setError('');
+    }, 3000);
+  };
+
+  const limpiar = () => {
+    setTextoLibre('');
+    setResultadoIA(null);
+    setResultadoEditado(null);
+    setError('');
   };
 
   if (confirmado) {
@@ -1206,55 +1234,107 @@ function PublicarExcedente({ onPublicar, comercioNombre }: { onPublicar: (e: Exc
             <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Descripción libre</label>
             <textarea
               value={textoLibre}
-              onChange={(e) => setTextoLibre(e.target.value)}
+              onChange={(e) => {
+                setTextoLibre(e.target.value);
+                setError('');
+              }}
               placeholder='Ej: "Me sobran 30 facturas y 2 kilos de pan del día"'
               rows={4}
-              className="w-full px-4 py-3 bg-[#faf9f7] dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-xl focus:border-[#5a7a54] dark:focus:border-[#8faa88] focus:ring-2 focus:ring-[#5a7a54]/10 dark:focus:ring-[#8faa88]/10 transition-all outline-none resize-none text-stone-800 dark:text-stone-100 placeholder:text-stone-300 dark:placeholder:text-stone-500"
+              className={`w-full px-4 py-3 bg-[#faf9f7] dark:bg-stone-700 border rounded-xl focus:ring-2 transition-all outline-none resize-none text-stone-800 dark:text-stone-100 placeholder:text-stone-300 dark:placeholder:text-stone-500 ${
+                error 
+                  ? 'border-red-300 dark:border-red-700 focus:border-red-500 focus:ring-red-500/10' 
+                  : 'border-stone-200 dark:border-stone-600 focus:border-[#5a7a54] dark:focus:border-[#8faa88] focus:ring-[#5a7a54]/10 dark:focus:ring-[#8faa88]/10'
+              }`}
             />
-            <p className="text-xs text-stone-400 dark:text-stone-500 mt-2">No importa el formato. Qwen lo estructura automáticamente.</p>
+            {error && (
+              <p className="text-xs text-red-600 dark:text-red-400 mt-2 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {error}
+              </p>
+            )}
+            {!error && (
+              <p className="text-xs text-stone-400 dark:text-stone-500 mt-2">No importa el formato. Qwen lo estructura automáticamente.</p>
+            )}
           </div>
 
-          <button
-            onClick={procesar}
-            disabled={!textoLibre.trim() || procesando}
-            className="w-full bg-[#5a7a54] dark:bg-[#4a5d49] hover:bg-[#4d6a48] dark:hover:bg-[#3d4d3c] disabled:bg-stone-200 dark:disabled:bg-stone-700 disabled:text-stone-400 dark:disabled:text-stone-500 text-white py-3.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2.5 shadow-sm"
-          >
-            {procesando ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Procesando con Qwen...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4" />
-                Procesar con IA
-              </>
+          <div className="flex gap-3">
+            <button
+              onClick={procesar}
+              disabled={!textoLibre.trim() || procesando}
+              className="flex-1 bg-[#5a7a54] dark:bg-[#4a5d49] hover:bg-[#4d6a48] dark:hover:bg-[#3d4d3c] disabled:bg-stone-200 dark:disabled:bg-stone-700 disabled:text-stone-400 dark:disabled:text-stone-500 text-white py-3.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2.5 shadow-sm"
+            >
+              {procesando ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Procesando con Qwen...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Procesar con IA
+                </>
+              )}
+            </button>
+            {textoLibre && (
+              <button
+                onClick={limpiar}
+                disabled={procesando}
+                className="px-6 py-3.5 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 disabled:opacity-50 text-stone-700 dark:text-stone-200 font-semibold rounded-xl transition-all"
+              >
+                Limpiar
+              </button>
             )}
-          </button>
+          </div>
 
-          {resultadoIA && (
+          {resultadoEditado && (
             <div className="mt-6 animate-fade-in-up">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-lg bg-[#5a7a54]/10 dark:bg-[#4a5d49]/20 flex items-center justify-center">
-                  <Bot className="w-3.5 h-3.5 text-[#5a7a54] dark:text-[#8faa88]" />
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-[#5a7a54]/10 dark:bg-[#4a5d49]/20 flex items-center justify-center">
+                    <Bot className="w-3.5 h-3.5 text-[#5a7a54] dark:text-[#8faa88]" />
+                  </div>
+                  <span className="text-sm font-medium text-stone-600 dark:text-stone-300">Resultado de Qwen AI</span>
                 </div>
-                <span className="text-sm font-medium text-stone-600 dark:text-stone-300">Resultado de Qwen AI</span>
+                <span className="text-xs text-stone-400 dark:text-stone-500">Podés editar los campos</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                {[
-                  { label: 'Categoría', value: resultadoIA.categoria, icon: Tag },
-                  { label: 'Cantidad', value: resultadoIA.cantidad, icon: Package },
-                  { label: 'Vencimiento', value: resultadoIA.vencimientoEstimado, icon: Clock },
-                ].map((item, i) => (
-                  <div key={i} className="bg-[#f5f8f4] dark:bg-stone-700 rounded-xl p-3.5 border border-[#e4ede2] dark:border-stone-600">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <item.icon className="w-3.5 h-3.5 text-[#8faa88]" />
-                      <span className="text-[10px] uppercase tracking-wider text-stone-400 dark:text-stone-500 font-medium">{item.label}</span>
-                    </div>
-                    <div className="text-sm font-semibold text-stone-800 dark:text-stone-100">{item.value}</div>
-                  </div>
-                ))}
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-stone-400 dark:text-stone-500 font-medium mb-1">
+                    <Tag className="w-3 h-3 inline mr-1" />
+                    Categoría
+                  </label>
+                  <input
+                    type="text"
+                    value={resultadoEditado.categoria}
+                    onChange={(e) => setResultadoEditado({ ...resultadoEditado, categoria: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#f5f8f4] dark:bg-stone-700 border border-[#e4ede2] dark:border-stone-600 rounded-lg text-sm font-semibold text-stone-800 dark:text-stone-100 focus:border-[#5a7a54] dark:focus:border-[#8faa88] focus:ring-1 focus:ring-[#5a7a54]/10 dark:focus:ring-[#8faa88]/10 transition-all outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-stone-400 dark:text-stone-500 font-medium mb-1">
+                    <Package className="w-3 h-3 inline mr-1" />
+                    Cantidad
+                  </label>
+                  <input
+                    type="text"
+                    value={resultadoEditado.cantidad}
+                    onChange={(e) => setResultadoEditado({ ...resultadoEditado, cantidad: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#f5f8f4] dark:bg-stone-700 border border-[#e4ede2] dark:border-stone-600 rounded-lg text-sm font-semibold text-stone-800 dark:text-stone-100 focus:border-[#5a7a54] dark:focus:border-[#8faa88] focus:ring-1 focus:ring-[#5a7a54]/10 dark:focus:ring-[#8faa88]/10 transition-all outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wider text-stone-400 dark:text-stone-500 font-medium mb-1">
+                    <Clock className="w-3 h-3 inline mr-1" />
+                    Vencimiento
+                  </label>
+                  <input
+                    type="text"
+                    value={resultadoEditado.vencimientoEstimado}
+                    onChange={(e) => setResultadoEditado({ ...resultadoEditado, vencimientoEstimado: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#f5f8f4] dark:bg-stone-700 border border-[#e4ede2] dark:border-stone-600 rounded-lg text-sm font-semibold text-stone-800 dark:text-stone-100 focus:border-[#5a7a54] dark:focus:border-[#8faa88] focus:ring-1 focus:ring-[#5a7a54]/10 dark:focus:ring-[#8faa88]/10 transition-all outline-none"
+                  />
+                </div>
               </div>
 
               <div className="bg-stone-50 dark:bg-stone-700 rounded-xl p-3 mb-4 border border-stone-100 dark:border-stone-600">
@@ -1262,13 +1342,24 @@ function PublicarExcedente({ onPublicar, comercioNombre }: { onPublicar: (e: Exc
                 <p className="text-sm text-stone-500 dark:text-stone-400 italic mt-0.5">"{textoLibre}"</p>
               </div>
 
-              <button
-                onClick={confirmarPublicacion}
-                className="w-full bg-stone-800 dark:bg-stone-700 hover:bg-stone-900 dark:hover:bg-stone-600 text-white py-3.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
-              >
-                <CheckCircle2 className="w-4 h-4" />
-                Confirmar y publicar
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={confirmarPublicacion}
+                  className="flex-1 bg-stone-800 dark:bg-stone-700 hover:bg-stone-900 dark:hover:bg-stone-600 text-white py-3.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Confirmar y publicar
+                </button>
+                <button
+                  onClick={() => {
+                    setResultadoIA(null);
+                    setResultadoEditado(null);
+                  }}
+                  className="px-6 py-3.5 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 font-semibold rounded-xl transition-all"
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -1839,7 +1930,7 @@ function AppContent() {
             </div>
           )}
 
-          {activeSection === 'mis-publicaciones' && <MisPublicaciones usuarioId={usuario.uid} />}
+          {activeSection === 'mis-publicaciones' && <MisPublicaciones usuarioId={usuario.uid} comercioNombre={comercio.nombre} />}
           
           {activeSection === 'comedores' && <ComedoresModule />}
           

@@ -1,15 +1,26 @@
-import { Package, Calendar, Clock, Edit2, Trash2, Eye } from 'lucide-react';
+import { Package, Calendar, Clock, Edit2, Trash2, Eye, X, Save, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { obtenerPublicacionesUsuario, type Publicacion } from '../services';
+import { 
+  obtenerPublicacionesUsuario, 
+  actualizarEstadoPublicacion, 
+  eliminarPublicacion,
+  type Publicacion 
+} from '../services';
 
 interface MisPublicacionesProps {
   usuarioId: string;
+  comercioNombre: string;
 }
 
-export default function MisPublicaciones({ usuarioId }: MisPublicacionesProps) {
+export default function MisPublicaciones({ usuarioId, comercioNombre }: MisPublicacionesProps) {
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [filtro, setFiltro] = useState<string>('todas');
   const [cargando, setCargando] = useState(true);
+  const [publicacionSeleccionada, setPublicacionSeleccionada] = useState<Publicacion | null>(null);
+  const [modoEdicion, setModoEdicion] = useState(false);
+  const [publicacionEditada, setPublicacionEditada] = useState<Partial<Publicacion>>({});
+  const [mostrarConfirmacionEliminar, setMostrarConfirmacionEliminar] = useState<string | null>(null);
+  const [procesando, setProcesando] = useState(false);
 
   useEffect(() => {
     cargarPublicaciones();
@@ -24,6 +35,47 @@ export default function MisPublicaciones({ usuarioId }: MisPublicacionesProps) {
       console.error('Error cargando publicaciones:', error);
     } finally {
       setCargando(false);
+    }
+  };
+
+  const handleEliminar = async (id: string) => {
+    try {
+      setProcesando(true);
+      await eliminarPublicacion(id);
+      setPublicaciones(publicaciones.filter(p => p.id !== id));
+      setMostrarConfirmacionEliminar(null);
+    } catch (error) {
+      console.error('Error eliminando publicación:', error);
+      alert('Error al eliminar la publicación');
+    } finally {
+      setProcesando(false);
+    }
+  };
+
+  const handleGuardarEdicion = async () => {
+    if (!publicacionSeleccionada) return;
+    
+    try {
+      setProcesando(true);
+      await actualizarEstadoPublicacion(
+        publicacionSeleccionada.id,
+        publicacionEditada.estado || publicacionSeleccionada.estado
+      );
+      
+      // Actualizar estado local
+      setPublicaciones(publicaciones.map(p => 
+        p.id === publicacionSeleccionada.id 
+          ? { ...p, ...publicacionEditada }
+          : p
+      ));
+      
+      setModoEdicion(false);
+      setPublicacionSeleccionada(null);
+    } catch (error) {
+      console.error('Error actualizando publicación:', error);
+      alert('Error al actualizar la publicación');
+    } finally {
+      setProcesando(false);
     }
   };
 
@@ -115,24 +167,218 @@ export default function MisPublicaciones({ usuarioId }: MisPublicacionesProps) {
                 </span>
               </div>
 
-              {pub.estado !== 'entregado' && (
-                <div className="flex items-center gap-2 pt-4 border-t border-stone-100 dark:border-stone-700">
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-700 transition-all">
-                    <Eye className="w-4 h-4" />
-                    Ver detalles
-                  </button>
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[#5a7a54] dark:text-[#8faa88] hover:bg-[#5a7a54]/5 dark:hover:bg-[#4a5d49]/20 transition-all">
-                    <Edit2 className="w-4 h-4" />
-                    Editar
-                  </button>
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">
-                    <Trash2 className="w-4 h-4" />
-                    Eliminar
-                  </button>
+              <div className="flex items-center gap-2 pt-4 border-t border-stone-100 dark:border-stone-700">
+                <button 
+                  onClick={() => {
+                    setPublicacionSeleccionada(pub);
+                    setPublicacionEditada(pub);
+                    setModoEdicion(false);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-700 transition-all"
+                >
+                  <Eye className="w-4 h-4" />
+                  Ver detalles
+                </button>
+                {pub.estado !== 'entregado' && (
+                  <>
+                    <button 
+                      onClick={() => {
+                        setPublicacionSeleccionada(pub);
+                        setPublicacionEditada(pub);
+                        setModoEdicion(true);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-[#5a7a54] dark:text-[#8faa88] hover:bg-[#5a7a54]/5 dark:hover:bg-[#4a5d49]/20 transition-all"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Editar
+                    </button>
+                    <button 
+                      onClick={() => setMostrarConfirmacionEliminar(pub.id)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Eliminar
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Confirmación de eliminación */}
+              {mostrarConfirmacionEliminar === pub.id && (
+                <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm text-red-800 dark:text-red-200 font-medium mb-3">
+                        ¿Estás seguro de que querés eliminar esta publicación? Esta acción no se puede deshacer.
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEliminar(pub.id)}
+                          disabled={procesando}
+                          className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-all"
+                        >
+                          {procesando ? 'Eliminando...' : 'Sí, eliminar'}
+                        </button>
+                        <button
+                          onClick={() => setMostrarConfirmacionEliminar(null)}
+                          disabled={procesando}
+                          className="px-4 py-2 bg-white dark:bg-stone-700 hover:bg-stone-50 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 text-sm font-medium rounded-lg border border-stone-200 dark:border-stone-600 transition-all"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal de detalles/edición */}
+      {publicacionSeleccionada && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => {
+          setPublicacionSeleccionada(null);
+          setModoEdicion(false);
+        }}>
+          <div className="bg-white dark:bg-stone-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white dark:bg-stone-800 border-b border-stone-200 dark:border-stone-700 p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-stone-800 dark:text-stone-100">
+                {modoEdicion ? 'Editar publicación' : 'Detalles de la publicación'}
+              </h2>
+              <button
+                onClick={() => {
+                  setPublicacionSeleccionada(null);
+                  setModoEdicion(false);
+                }}
+                className="p-2 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-stone-500 dark:text-stone-400" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Información básica */}
+              <div>
+                <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Comercio</label>
+                <div className="px-4 py-3 bg-stone-50 dark:bg-stone-700 rounded-xl text-stone-800 dark:text-stone-100">
+                  {publicacionSeleccionada.comercioNombre}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Categoría</label>
+                <div className="px-4 py-3 bg-stone-50 dark:bg-stone-700 rounded-xl text-stone-800 dark:text-stone-100">
+                  {publicacionSeleccionada.categoria}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Descripción</label>
+                <div className="px-4 py-3 bg-stone-50 dark:bg-stone-700 rounded-xl text-stone-800 dark:text-stone-100">
+                  {publicacionSeleccionada.descripcion}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Cantidad</label>
+                  <div className="px-4 py-3 bg-stone-50 dark:bg-stone-700 rounded-xl text-stone-800 dark:text-stone-100">
+                    {publicacionSeleccionada.cantidad}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Vencimiento</label>
+                  <div className="px-4 py-3 bg-stone-50 dark:bg-stone-700 rounded-xl text-stone-800 dark:text-stone-100">
+                    {publicacionSeleccionada.vencimientoEstimado}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Fecha de publicación</label>
+                <div className="px-4 py-3 bg-stone-50 dark:bg-stone-700 rounded-xl text-stone-800 dark:text-stone-100">
+                  {formatearFecha(publicacionSeleccionada.createdAt)}
+                </div>
+              </div>
+
+              {/* Estado - editable */}
+              {modoEdicion ? (
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Estado</label>
+                  <select
+                    value={publicacionEditada.estado}
+                    onChange={(e) => setPublicacionEditada({ ...publicacionEditada, estado: e.target.value as any })}
+                    className="w-full px-4 py-3 bg-stone-50 dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-xl text-stone-800 dark:text-stone-100 focus:border-[#5a7a54] dark:focus:border-[#8faa88] focus:ring-2 focus:ring-[#5a7a54]/10 dark:focus:ring-[#8faa88]/10 transition-all outline-none"
+                  >
+                    <option value="disponible">Disponible</option>
+                    <option value="reservado">Reservado</option>
+                    <option value="entregado">Entregado</option>
+                  </select>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Estado</label>
+                  <div className={`px-4 py-3 rounded-xl border ${
+                    publicacionSeleccionada.estado === 'disponible' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-900 text-green-700 dark:text-green-400' :
+                    publicacionSeleccionada.estado === 'reservado' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-900 text-yellow-700 dark:text-yellow-400' :
+                    'bg-stone-50 dark:bg-stone-700 border-stone-200 dark:border-stone-600 text-stone-700 dark:text-stone-300'
+                  }`}>
+                    {publicacionSeleccionada.estado === 'disponible' ? 'Disponible' :
+                     publicacionSeleccionada.estado === 'reservado' ? 'Reservado' : 'Entregado'}
+                  </div>
+                </div>
+              )}
+
+              {/* Información del comedor si está reservado/entregado */}
+              {publicacionSeleccionada.comedorNombre && (
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Comedor</label>
+                  <div className="px-4 py-3 bg-stone-50 dark:bg-stone-700 rounded-xl text-stone-800 dark:text-stone-100">
+                    {publicacionSeleccionada.comedorNombre}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer con acciones */}
+            <div className="sticky bottom-0 bg-white dark:bg-stone-800 border-t border-stone-200 dark:border-stone-700 p-6 flex gap-3">
+              {modoEdicion ? (
+                <>
+                  <button
+                    onClick={handleGuardarEdicion}
+                    disabled={procesando}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#5a7a54] dark:bg-[#4a5d49] hover:bg-[#4d6a48] dark:hover:bg-[#3d4d3c] disabled:opacity-50 text-white font-semibold rounded-xl transition-all"
+                  >
+                    <Save className="w-5 h-5" />
+                    {procesando ? 'Guardando...' : 'Guardar cambios'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setModoEdicion(false);
+                      setPublicacionEditada(publicacionSeleccionada);
+                    }}
+                    disabled={procesando}
+                    className="px-6 py-3 bg-white dark:bg-stone-700 hover:bg-stone-50 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 font-semibold rounded-xl border border-stone-200 dark:border-stone-600 transition-all"
+                  >
+                    Cancelar
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    setPublicacionSeleccionada(null);
+                    setModoEdicion(false);
+                  }}
+                  className="flex-1 px-6 py-3 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 font-semibold rounded-xl transition-all"
+                >
+                  Cerrar
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
