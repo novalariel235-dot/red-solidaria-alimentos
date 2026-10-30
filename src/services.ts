@@ -2,6 +2,7 @@ import {
   collection, 
   addDoc, 
   getDocs, 
+  getDoc,
   query, 
   where, 
   orderBy, 
@@ -221,4 +222,118 @@ export async function obtenerEstadisticasUsuario(usuarioId: string) {
     kgDonados,
     entregasCompletadas
   };
+}
+
+// ─── Reservas ────────────────────────────────────────────
+export interface Reserva {
+  id: string;
+  publicacionId: string;
+  comedorId: string;
+  comedorNombre: string;
+  comercioId: string;
+  comercioNombre: string;
+  mensaje: string;
+  estado: 'pendiente' | 'aceptada' | 'rechazada' | 'completada';
+  createdAt: Timestamp;
+}
+
+export async function crearReserva(
+  publicacionId: string,
+  comedorId: string,
+  comedorNombre: string,
+  comercioId: string,
+  comercioNombre: string,
+  mensaje: string
+): Promise<string> {
+  if (!isFirebaseConfigured) {
+    throw new Error('Firebase no configurado');
+  }
+
+  const docRef = await addDoc(collection(db, 'reservas'), {
+    publicacionId,
+    comedorId,
+    comedorNombre,
+    comercioId,
+    comercioNombre,
+    mensaje,
+    estado: 'pendiente',
+    createdAt: serverTimestamp()
+  });
+
+  // Actualizar estado de la publicación
+  await actualizarEstadoPublicacion(publicacionId, 'reservado');
+
+  // Crear notificación para el comercio
+  await crearNotificacion(
+    comercioId,
+    'reserva',
+    'Nueva reserva',
+    `${comedorNombre} quiere reservar tu publicación`
+  );
+
+  return docRef.id;
+}
+
+export async function obtenerReservasComedor(comedorId: string): Promise<Reserva[]> {
+  if (!isFirebaseConfigured) return [];
+
+  const q = query(
+    collection(db, 'reservas'),
+    where('comedorId', '==', comedorId),
+    orderBy('createdAt', 'desc')
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as Reserva[];
+}
+
+export async function obtenerReservasComercio(comercioId: string): Promise<Reserva[]> {
+  if (!isFirebaseConfigured) return [];
+
+  const q = query(
+    collection(db, 'reservas'),
+    where('comercioId', '==', comercioId),
+    orderBy('createdAt', 'desc')
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as Reserva[];
+}
+
+export async function actualizarEstadoReserva(
+  reservaId: string,
+  estado: 'pendiente' | 'aceptada' | 'rechazada' | 'completada'
+): Promise<void> {
+  if (!isFirebaseConfigured) return;
+
+  const reservaRef = doc(db, 'reservas', reservaId);
+  await updateDoc(reservaRef, { estado });
+
+  // Si se acepta o rechaza, actualizar estado de la publicación
+  if (estado === 'aceptada' || estado === 'rechazada') {
+    const reservaDoc = await getDoc(reservaRef);
+    const reserva = reservaDoc.data() as Reserva;
+    
+    if (estado === 'aceptada') {
+      await actualizarEstadoPublicacion(reserva.publicacionId, 'entregado');
+    } else {
+      await actualizarEstadoPublicacion(reserva.publicacionId, 'disponible');
+    }
+
+    // Notificar al comedor
+    await crearNotificacion(
+      reserva.comedorId,
+      estado === 'aceptada' ? 'entrega' : 'sistema',
+      estado === 'aceptada' ? 'Reserva aceptada' : 'Reserva rechazada',
+      estado === 'aceptada' 
+        ? `${reserva.comercioNombre} aceptó tu reserva`
+        : `${reserva.comercioNombre} rechazó tu reserva`
+    );
+  }
 }

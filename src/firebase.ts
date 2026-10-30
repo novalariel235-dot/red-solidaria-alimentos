@@ -83,6 +83,7 @@ export interface Usuario {
 export interface Comercio {
   nombre: string;
   tipo: string;
+  tipoUsuario: 'comercio' | 'comedor';
   direccion: string;
   lat?: number;
   lng?: number;
@@ -91,6 +92,7 @@ export interface Comercio {
   diasRetiro: string[];
   horarioDesde: string;
   horarioHasta: string;
+  capacidad?: number;
 }
 
 // ─── Auth Functions ──────────────────────────────────────
@@ -217,6 +219,7 @@ export async function obtenerComercio(uid: string): Promise<Comercio | null> {
     return {
       nombre: data.nombre || '',
       tipo: data.tipo || '',
+      tipoUsuario: data.tipoUsuario || 'comercio',
       direccion: data.direccion || '',
       lat: data.lat || undefined,
       lng: data.lng || undefined,
@@ -224,7 +227,8 @@ export async function obtenerComercio(uid: string): Promise<Comercio | null> {
       descripcion: data.descripcion || '',
       diasRetiro: data.diasRetiro || [],
       horarioDesde: data.horarioDesde || '',
-      horarioHasta: data.horarioHasta || ''
+      horarioHasta: data.horarioHasta || '',
+      capacidad: data.capacidad || undefined
     };
   }
   return null;

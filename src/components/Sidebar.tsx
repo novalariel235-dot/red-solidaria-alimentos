@@ -1,19 +1,28 @@
 import { useState, useEffect } from 'react';
 import {
   Home, Package, ClipboardList, UtensilsCrossed, BarChart3,
-  Bell, Settings, LogOut, Menu, X, HeartHandshake, ChevronRight, User
+  Bell, Settings, LogOut, Menu, X, HeartHandshake, ChevronRight, User,
+  ShoppingBag, Heart
 } from 'lucide-react';
 import { obtenerNotificacionesUsuario } from '../services';
+
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: any;
+  badge?: number;
+}
 
 interface SidebarProps {
   activeSection: string;
   setActiveSection: (section: string) => void;
   comercioNombre: string;
   usuarioId: string;
+  tipoUsuario: 'comercio' | 'comedor';
   onLogout: () => void;
 }
 
-export default function Sidebar({ activeSection, setActiveSection, comercioNombre, usuarioId, onLogout }: SidebarProps) {
+export default function Sidebar({ activeSection, setActiveSection, comercioNombre, usuarioId, tipoUsuario, onLogout }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notificacionesNoLeidas, setNotificacionesNoLeidas] = useState(0);
 
@@ -31,16 +40,33 @@ export default function Sidebar({ activeSection, setActiveSection, comercioNombr
     }
   };
 
-  const menuItems = [
+  // Menú base para todos los usuarios
+  const menuItemsBase: MenuItem[] = [
     { id: 'inicio', label: 'Home', icon: Home },
-    { id: 'publicar', label: 'Publicar', icon: Package },
-    { id: 'mis-publicaciones', label: 'Mis Publicaciones', icon: ClipboardList },
-    { id: 'comedores', label: 'Comedores', icon: UtensilsCrossed },
-    { id: 'impacto', label: 'Mi Impacto', icon: BarChart3 },
     { id: 'notificaciones', label: 'Notificaciones', icon: Bell, badge: notificacionesNoLeidas },
     { id: 'perfil', label: 'Perfil', icon: User },
     { id: 'configuracion', label: 'Configuración', icon: Settings },
   ];
+
+  // Menú específico para comercios
+  const menuItemsComercio: MenuItem[] = [
+    { id: 'publicar', label: 'Publicar', icon: Package },
+    { id: 'mis-publicaciones', label: 'Mis Publicaciones', icon: ClipboardList },
+    { id: 'mis-reservas', label: 'Solicitudes', icon: Heart },
+    { id: 'comedores', label: 'Comedores', icon: UtensilsCrossed },
+    { id: 'impacto', label: 'Mi Impacto', icon: BarChart3 },
+  ];
+
+  // Menú específico para comedores
+  const menuItemsComedor: MenuItem[] = [
+    { id: 'publicaciones-disponibles', label: 'Excedentes', icon: ShoppingBag },
+    { id: 'mis-reservas', label: 'Mis Reservas', icon: Heart },
+    { id: 'comedores', label: 'Comedores', icon: UtensilsCrossed },
+  ];
+
+  const menuItems: MenuItem[] = tipoUsuario === 'comercio' 
+    ? [...menuItemsBase.slice(0, 1), ...menuItemsComercio, ...menuItemsBase.slice(1)]
+    : [...menuItemsBase.slice(0, 1), ...menuItemsComedor, ...menuItemsBase.slice(1)];
 
   const handleNav = (id: string) => {
     setActiveSection(id);

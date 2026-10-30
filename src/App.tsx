@@ -41,6 +41,8 @@ import MiImpacto from './components/MiImpacto';
 import Notificaciones from './components/Notificaciones';
 import Perfil from './components/Perfil';
 import Configuracion from './components/Configuracion';
+import PublicacionesDisponibles from './components/PublicacionesDisponibles';
+import MisReservas from './components/MisReservas';
 import { ThemeProvider } from './ThemeContext';
 
 // ─── Types ───────────────────────────────────────────────
@@ -555,6 +557,7 @@ function OnboardingScreen({ usuario, onComplete }: { usuario: Usuario; onComplet
   const [comercio, setComercio] = useState<Comercio>({
     nombre: '',
     tipo: '',
+    tipoUsuario: 'comercio',
     direccion: '',
     lat: undefined,
     lng: undefined,
@@ -568,7 +571,7 @@ function OnboardingScreen({ usuario, onComplete }: { usuario: Usuario; onComplet
 
   const totalSteps = 3;
   const canNext = () => {
-    if (step === 1) return comercio.nombre && comercio.tipo;
+    if (step === 1) return comercio.nombre && comercio.tipo && comercio.tipoUsuario;
     if (step === 2) return comercio.direccion && comercio.lat && comercio.lng && comercio.telefono && comercio.diasRetiro.length > 0 && comercio.horarioDesde && comercio.horarioHasta;
     return true;
   };
@@ -602,17 +605,54 @@ function OnboardingScreen({ usuario, onComplete }: { usuario: Usuario; onComplet
               <div className="w-12 h-12 rounded-xl bg-[#5a7a54]/10 flex items-center justify-center mb-5">
                 <Building2 className="w-6 h-6 text-[#5a7a54]" />
               </div>
-              <h3 className="text-2xl font-bold text-stone-800 tracking-tight mb-2">Contanos sobre tu comercio</h3>
+              <h3 className="text-2xl font-bold text-stone-800 tracking-tight mb-2">Contanos sobre tu organización</h3>
               <p className="text-stone-400 text-sm mb-6">Esto nos ayuda a conectar con la organización correcta.</p>
 
               <div className="space-y-4">
+                {/* Tipo de usuario */}
                 <div>
-                  <label className="block text-sm font-medium text-stone-600 mb-1.5">Nombre del comercio u organización</label>
+                  <label className="block text-sm font-medium text-stone-600 mb-2">¿Qué tipo de organización sos?</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setComercio({...comercio, tipoUsuario: 'comercio'})}
+                      className={`p-4 rounded-xl border-2 transition-all text-left ${
+                        comercio.tipoUsuario === 'comercio'
+                          ? 'border-[#5a7a54] bg-[#5a7a54]/5 dark:bg-[#4a5d49]/20'
+                          : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'
+                      }`}
+                    >
+                      <div className="text-2xl mb-2">🏪</div>
+                      <div className="font-semibold text-stone-800 dark:text-stone-100">Comercio</div>
+                      <div className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                        Panadería, verdulería, almacén, etc.
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setComercio({...comercio, tipoUsuario: 'comedor'})}
+                      className={`p-4 rounded-xl border-2 transition-all text-left ${
+                        comercio.tipoUsuario === 'comedor'
+                          ? 'border-[#5a7a54] bg-[#5a7a54]/5 dark:bg-[#4a5d49]/20'
+                          : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'
+                      }`}
+                    >
+                      <div className="text-2xl mb-2">🍽️</div>
+                      <div className="font-semibold text-stone-800 dark:text-stone-100">Comedor</div>
+                      <div className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                        Comedor comunitario, merendero, etc.
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-stone-600 mb-1.5">Nombre de la organización</label>
                   <input
                     type="text"
                     value={comercio.nombre}
                     onChange={(e) => setComercio({...comercio, nombre: e.target.value})}
-                    placeholder="Ej: Panadería La Espiga Dorada"
+                    placeholder={comercio.tipoUsuario === 'comercio' ? "Ej: Panadería La Espiga Dorada" : "Ej: Comedor Manos Solidarias"}
                     className="w-full px-4 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none text-stone-800 placeholder:text-stone-300 text-sm"
                   />
                 </div>
@@ -2108,6 +2148,7 @@ function AppContent() {
         setActiveSection={setActiveSection}
         comercioNombre={comercio.nombre}
         usuarioId={usuario.uid}
+        tipoUsuario={comercio.tipoUsuario}
         onLogout={handleLogout}
       />
 
@@ -2135,6 +2176,20 @@ function AppContent() {
           {activeSection === 'perfil' && <Perfil comercio={comercio} />}
           
           {activeSection === 'configuracion' && <Configuracion />}
+
+          {activeSection === 'publicaciones-disponibles' && (
+            <PublicacionesDisponibles 
+              comedorId={usuario.uid} 
+              comedorNombre={comercio.nombre} 
+            />
+          )}
+
+          {activeSection === 'mis-reservas' && (
+            <MisReservas 
+              usuarioId={usuario.uid} 
+              tipoUsuario={comercio.tipoUsuario} 
+            />
+          )}
         </div>
       </div>
     </div>
