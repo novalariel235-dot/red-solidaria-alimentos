@@ -93,6 +93,7 @@ export interface Comercio {
   horarioDesde: string;
   horarioHasta: string;
   capacidad?: number;
+  personasAtendidas?: number;
 }
 
 // ─── Auth Functions ──────────────────────────────────────
@@ -228,7 +229,8 @@ export async function obtenerComercio(uid: string): Promise<Comercio | null> {
       diasRetiro: data.diasRetiro || [],
       horarioDesde: data.horarioDesde || '',
       horarioHasta: data.horarioHasta || '',
-      capacidad: data.capacidad || undefined
+      capacidad: data.capacidad || undefined,
+      personasAtendidas: data.personasAtendidas || undefined
     };
   }
   return null;

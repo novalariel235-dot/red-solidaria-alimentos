@@ -92,7 +92,11 @@ const excedentesIniciales: Excedente[] = [
 
 const tiposComercio = [
   'Panadería', 'Verdulería', 'Frutería', 'Almacén', 'Carnicería',
-  'Lácteos', 'Restaurante', 'Comedor comunitario', 'Otro'
+  'Lácteos', 'Restaurante', 'Otro'
+];
+
+const tiposComedor = [
+  'Comedor comunitario', 'Merendero', 'Iglesia', 'ONG', 'Fundación', 'Otro'
 ];
 
 // ─── AI Simulation ───────────────────────────────────────
@@ -565,14 +569,26 @@ function OnboardingScreen({ usuario, onComplete }: { usuario: Usuario; onComplet
     descripcion: '',
     diasRetiro: [],
     horarioDesde: '',
-    horarioHasta: ''
+    horarioHasta: '',
+    capacidad: undefined,
+    personasAtendidas: undefined
   });
   const [loading, setLoading] = useState(false);
 
   const totalSteps = 3;
   const canNext = () => {
     if (step === 1) return comercio.nombre && comercio.tipo && comercio.tipoUsuario;
-    if (step === 2) return comercio.direccion && comercio.lat && comercio.lng && comercio.telefono && comercio.diasRetiro.length > 0 && comercio.horarioDesde && comercio.horarioHasta;
+    if (step === 2) {
+      // Validación común para ambos
+      const basicoValido = comercio.direccion && comercio.lat && comercio.lng && comercio.telefono;
+      
+      // Validación específica según tipo
+      if (comercio.tipoUsuario === 'comercio') {
+        return basicoValido && comercio.diasRetiro.length > 0 && comercio.horarioDesde && comercio.horarioHasta;
+      } else {
+        return basicoValido && comercio.capacidad && comercio.capacidad > 0;
+      }
+    }
     return true;
   };
 
@@ -658,9 +674,11 @@ function OnboardingScreen({ usuario, onComplete }: { usuario: Usuario; onComplet
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-stone-600 mb-1.5">Tipo de organización</label>
+                  <label className="block text-sm font-medium text-stone-600 mb-1.5">
+                    {comercio.tipoUsuario === 'comercio' ? 'Tipo de comercio' : 'Tipo de organización'}
+                  </label>
                   <div className="grid grid-cols-3 gap-2">
-                    {tiposComercio.map((tipo) => (
+                    {(comercio.tipoUsuario === 'comercio' ? tiposComercio : tiposComedor).map((tipo) => (
                       <button
                         key={tipo}
                         onClick={() => setComercio({...comercio, tipo})}
@@ -684,8 +702,14 @@ function OnboardingScreen({ usuario, onComplete }: { usuario: Usuario; onComplet
               <div className="w-12 h-12 rounded-xl bg-[#5a7a54]/10 flex items-center justify-center mb-5">
                 <MapPin className="w-6 h-6 text-[#5a7a54]" />
               </div>
-              <h3 className="text-2xl font-bold text-stone-800 tracking-tight mb-2">Ubicación y contacto</h3>
-              <p className="text-stone-400 text-sm mb-6">Para que los comedores puedan retirarlo fácilmente.</p>
+              <h3 className="text-2xl font-bold text-stone-800 tracking-tight mb-2">
+                {comercio.tipoUsuario === 'comercio' ? 'Ubicación y horarios de retiro' : 'Ubicación y capacidad'}
+              </h3>
+              <p className="text-stone-400 text-sm mb-6">
+                {comercio.tipoUsuario === 'comercio' 
+                  ? 'Para que los comedores sepan cuándo pueden pasar a retirar.'
+                  : 'Para que sepamos cuántas personas pueden asistir.'}
+              </p>
 
               <div className="space-y-6">
                 {/* Dirección con mapa */}
@@ -709,19 +733,61 @@ function OnboardingScreen({ usuario, onComplete }: { usuario: Usuario; onComplet
                   </div>
                 </div>
 
-                {/* Horario */}
-                <SchedulePicker
-                  value={{ 
-                    dias: comercio.diasRetiro, 
-                    horario: { desde: comercio.horarioDesde, hasta: comercio.horarioHasta }
-                  }}
-                  onChange={(sched) => setComercio({
-                    ...comercio, 
-                    diasRetiro: sched.dias,
-                    horarioDesde: sched.horario.desde,
-                    horarioHasta: sched.horario.hasta
-                  })}
-                />
+                {/* Campos específicos según tipo de usuario */}
+                {comercio.tipoUsuario === 'comercio' ? (
+                  /* Horarios de retiro para comercios */
+                  <SchedulePicker
+                    value={{ 
+                      dias: comercio.diasRetiro, 
+                      horario: { desde: comercio.horarioDesde, hasta: comercio.horarioHasta }
+                    }}
+                    onChange={(sched) => setComercio({
+                      ...comercio, 
+                      diasRetiro: sched.dias,
+                      horarioDesde: sched.horario.desde,
+                      horarioHasta: sched.horario.hasta
+                    })}
+                  />
+                ) : (
+                  /* Capacidad para comedores */
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-stone-600 mb-1.5">
+                        Capacidad máxima de personas
+                      </label>
+                      <div className="relative">
+                        <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" />
+                        <input
+                          type="number"
+                          value={comercio.capacidad || ''}
+                          onChange={(e) => setComercio({...comercio, capacidad: parseInt(e.target.value) || undefined})}
+                          placeholder="Ej: 100"
+                          min="1"
+                          className="w-full pl-10 pr-4 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none text-stone-800 placeholder:text-stone-300 text-sm"
+                        />
+                      </div>
+                      <p className="text-xs text-stone-400 mt-1">Cantidad máxima de personas que pueden asistir por día</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-stone-600 mb-1.5">
+                        Personas atendidas por día (promedio)
+                      </label>
+                      <div className="relative">
+                        <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" />
+                        <input
+                          type="number"
+                          value={comercio.personasAtendidas || ''}
+                          onChange={(e) => setComercio({...comercio, personasAtendidas: parseInt(e.target.value) || undefined})}
+                          placeholder="Ej: 65"
+                          min="0"
+                          className="w-full pl-10 pr-4 py-3 bg-[#faf9f7] border border-stone-200 rounded-xl focus:border-[#5a7a54] focus:ring-2 focus:ring-[#5a7a54]/10 transition-all outline-none text-stone-800 placeholder:text-stone-300 text-sm"
+                        />
+                      </div>
+                      <p className="text-xs text-stone-400 mt-1">Promedio diario de personas que asisten al comedor</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -770,13 +836,32 @@ function OnboardingScreen({ usuario, onComplete }: { usuario: Usuario; onComplet
                       <Phone className="w-3.5 h-3.5 text-stone-400" />
                       {comercio.telefono || '—'}
                     </div>
-                    {comercio.diasRetiro.length > 0 && (
+                    
+                    {/* Información específica según tipo */}
+                    {comercio.tipoUsuario === 'comercio' && comercio.diasRetiro.length > 0 && (
                       <div className="flex items-start gap-2 text-stone-600">
                         <Clock className="w-3.5 h-3.5 text-stone-400 mt-0.5 shrink-0" />
                         <span>
                           {comercio.diasRetiro.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(', ')} · {comercio.horarioDesde} a {comercio.horarioHasta}
                         </span>
                       </div>
+                    )}
+                    
+                    {comercio.tipoUsuario === 'comedor' && (
+                      <>
+                        {comercio.capacidad && (
+                          <div className="flex items-center gap-2 text-stone-600">
+                            <Users className="w-3.5 h-3.5 text-stone-400" />
+                            <span>Capacidad: {comercio.capacidad} personas</span>
+                          </div>
+                        )}
+                        {comercio.personasAtendidas && (
+                          <div className="flex items-center gap-2 text-stone-600">
+                            <Users className="w-3.5 h-3.5 text-stone-400" />
+                            <span>Atienden: {comercio.personasAtendidas} personas/día</span>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
