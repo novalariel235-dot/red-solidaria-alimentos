@@ -2241,7 +2241,7 @@ function AppContent() {
       <div className="lg:pl-64">
         <div key={activeSection} className="animate-fade-in">
           {activeSection === 'inicio' && (
-            <Dashboard comercioNombre={comercio.nombre} usuarioId={usuario.uid} setActiveSection={setActiveSection} />
+            <Dashboard comercioNombre={comercio.nombre} usuarioId={usuario.uid} tipoUsuario={comercio.tipoUsuario} setActiveSection={setActiveSection} />
           )}
 
           {activeSection === 'publicar' && (
