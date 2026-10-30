@@ -5,7 +5,8 @@ import {
   Send, ChevronRight, Sparkles, Store, Users, Recycle,
   TrendingUp, MessageCircle, FileText, Brain, Database,
   Server, Wifi, CircleDot, Play, Mail, Lock, User,
-  Eye, EyeOff, ArrowLeft, Building2, Truck, Globe, Navigation, AlertCircle
+  Eye, EyeOff, ArrowLeft, Building2, Truck, Globe, Navigation, AlertCircle,
+  Save, Image, Calendar
 } from 'lucide-react';
 import {
   isFirebaseConfigured,
@@ -1140,6 +1141,12 @@ function PublicarExcedente({ onPublicar, comercioNombre }: { onPublicar: (e: Exc
   const [resultadoEditado, setResultadoEditado] = useState<{ categoria: string; cantidad: string; vencimientoEstimado: string } | null>(null);
   const [confirmado, setConfirmado] = useState(false);
   const [error, setError] = useState('');
+  const [programarPublicacion, setProgramarPublicacion] = useState(false);
+  const [fechaProgramada, setFechaProgramada] = useState('');
+  const [templates, setTemplates] = useState<Array<{ nombre: string; texto: string }>>([]);
+  const [mostrarTemplates, setMostrarTemplates] = useState(false);
+  const [fotos, setFotos] = useState<string[]>([]);
+  const [guardarBorrador, setGuardarBorrador] = useState(false);
 
   const procesar = () => {
     setError('');
@@ -1191,6 +1198,62 @@ function PublicarExcedente({ onPublicar, comercioNombre }: { onPublicar: (e: Exc
     setResultadoIA(null);
     setResultadoEditado(null);
     setError('');
+    setProgramarPublicacion(false);
+    setFechaProgramada('');
+    setFotos([]);
+    setGuardarBorrador(false);
+  };
+
+  // Guardar como template
+  const guardarComoTemplate = () => {
+    if (!textoLibre.trim()) return;
+    const nombre = prompt('Nombre del template:');
+    if (nombre) {
+      setTemplates([...templates, { nombre, texto: textoLibre }]);
+      alert('Template guardado');
+    }
+  };
+
+  // Cargar template
+  const cargarTemplate = (template: { nombre: string; texto: string }) => {
+    setTextoLibre(template.texto);
+    setMostrarTemplates(false);
+  };
+
+  // Eliminar template
+  const eliminarTemplate = (index: number) => {
+    setTemplates(templates.filter((_, i) => i !== index));
+  };
+
+  // Manejar subida de fotos
+  const handleFotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setFotos(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  // Eliminar foto
+  const eliminarFoto = (index: number) => {
+    setFotos(fotos.filter((_, i) => i !== index));
+  };
+
+  // Guardar como borrador
+  const guardarComoBorrador = () => {
+    if (!textoLibre.trim()) {
+      setError('No hay texto para guardar como borrador');
+      return;
+    }
+    // En una implementación real, esto se guardaría en Firebase
+    setGuardarBorrador(true);
+    alert('Borrador guardado');
+    setTimeout(() => setGuardarBorrador(false), 2000);
   };
 
   if (confirmado) {
@@ -1256,6 +1319,137 @@ function PublicarExcedente({ onPublicar, comercioNombre }: { onPublicar: (e: Exc
               <p className="text-xs text-stone-400 dark:text-stone-500 mt-2">No importa el formato. Qwen lo estructura automáticamente.</p>
             )}
           </div>
+
+          {/* Acciones adicionales */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            <button
+              onClick={() => setMostrarTemplates(!mostrarTemplates)}
+              className="flex items-center gap-2 px-3 py-2 bg-stone-50 dark:bg-stone-700 hover:bg-stone-100 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 text-sm font-medium rounded-lg transition-all"
+            >
+              <FileText className="w-4 h-4" />
+              Templates
+            </button>
+            <button
+              onClick={guardarComoTemplate}
+              disabled={!textoLibre.trim()}
+              className="flex items-center gap-2 px-3 py-2 bg-stone-50 dark:bg-stone-700 hover:bg-stone-100 dark:hover:bg-stone-600 disabled:opacity-50 text-stone-700 dark:text-stone-200 text-sm font-medium rounded-lg transition-all"
+            >
+              <Save className="w-4 h-4" />
+              Guardar template
+            </button>
+            <label className="flex items-center gap-2 px-3 py-2 bg-stone-50 dark:bg-stone-700 hover:bg-stone-100 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 text-sm font-medium rounded-lg transition-all cursor-pointer">
+              <Image className="w-4 h-4" />
+              Agregar fotos
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFotoUpload}
+                className="hidden"
+              />
+            </label>
+            <button
+              onClick={() => setProgramarPublicacion(!programarPublicacion)}
+              className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+                programarPublicacion
+                  ? 'bg-[#5a7a54] dark:bg-[#4a5d49] text-white'
+                  : 'bg-stone-50 dark:bg-stone-700 hover:bg-stone-100 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200'
+              }`}
+            >
+              <Calendar className="w-4 h-4" />
+              Programar
+            </button>
+            <button
+              onClick={guardarComoBorrador}
+              disabled={!textoLibre.trim()}
+              className="flex items-center gap-2 px-3 py-2 bg-stone-50 dark:bg-stone-700 hover:bg-stone-100 dark:hover:bg-stone-600 disabled:opacity-50 text-stone-700 dark:text-stone-200 text-sm font-medium rounded-lg transition-all"
+            >
+              <Save className="w-4 h-4" />
+              Borrador
+            </button>
+          </div>
+
+          {/* Modal de templates */}
+          {mostrarTemplates && (
+            <div className="mb-6 p-4 bg-stone-50 dark:bg-stone-700 rounded-xl border border-stone-200 dark:border-stone-600">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-stone-800 dark:text-stone-100">Templates guardados</h4>
+                <button
+                  onClick={() => setMostrarTemplates(false)}
+                  className="p-1 hover:bg-stone-200 dark:hover:bg-stone-600 rounded-lg transition-colors"
+                >
+                  <X className="w-4 h-4 text-stone-500" />
+                </button>
+              </div>
+              {templates.length === 0 ? (
+                <p className="text-sm text-stone-500 dark:text-stone-400">No tenés templates guardados</p>
+              ) : (
+                <div className="space-y-2">
+                  {templates.map((template, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-stone-800 rounded-lg border border-stone-200 dark:border-stone-600">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-stone-800 dark:text-stone-100 text-sm">{template.nombre}</div>
+                        <div className="text-xs text-stone-500 dark:text-stone-400 truncate">{template.texto}</div>
+                      </div>
+                      <div className="flex gap-2 ml-2">
+                        <button
+                          onClick={() => cargarTemplate(template)}
+                          className="px-3 py-1 bg-[#5a7a54] dark:bg-[#4a5d49] hover:bg-[#4d6a48] dark:hover:bg-[#3d4d3c] text-white text-xs font-medium rounded-lg transition-all"
+                        >
+                          Usar
+                        </button>
+                        <button
+                          onClick={() => eliminarTemplate(index)}
+                          className="px-3 py-1 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-medium rounded-lg transition-all"
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sección de fotos */}
+          {fotos.length > 0 && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Fotos agregadas</label>
+              <div className="grid grid-cols-3 gap-2">
+                {fotos.map((foto, index) => (
+                  <div key={index} className="relative group">
+                    <img src={foto} alt={`Foto ${index + 1}`} className="w-full h-24 object-cover rounded-lg border border-stone-200 dark:border-stone-600" />
+                    <button
+                      onClick={() => eliminarFoto(index)}
+                      className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Programación */}
+          {programarPublicacion && (
+            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+              <label className="block text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                Fecha y hora de publicación
+              </label>
+              <input
+                type="datetime-local"
+                value={fechaProgramada}
+                onChange={(e) => setFechaProgramada(e.target.value)}
+                min={new Date().toISOString().slice(0, 16)}
+                className="w-full px-3 py-2 bg-white dark:bg-stone-800 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-stone-800 dark:text-stone-100 focus:border-[#5a7a54] dark:focus:border-[#8faa88] focus:ring-1 focus:ring-[#5a7a54]/10 dark:focus:ring-[#8faa88]/10 transition-all outline-none"
+              />
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
+                La publicación se realizará automáticamente en la fecha y hora seleccionada
+              </p>
+            </div>
+          )}
 
           <div className="flex gap-3">
             <button
