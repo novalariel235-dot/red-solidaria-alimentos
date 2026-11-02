@@ -23,11 +23,19 @@ export default function PublicacionesDisponibles({ comedorId, comedorNombre }: P
   const cargarPublicaciones = async () => {
     try {
       setCargando(true);
+      console.log('🔄 Cargando publicaciones disponibles...');
       const data = await obtenerTodasLasPublicaciones();
+      console.log('📦 Total de publicaciones recibidas:', data.length);
+      console.log('📦 Publicaciones:', data);
+      
       // Solo mostrar publicaciones disponibles
-      setPublicaciones(data.filter(p => p.estado === 'disponible'));
+      const disponibles = data.filter(p => p.estado === 'disponible');
+      console.log('✅ Publicaciones disponibles:', disponibles.length);
+      console.log('✅ Publicaciones disponibles:', disponibles);
+      
+      setPublicaciones(disponibles);
     } catch (error) {
-      console.error('Error cargando publicaciones:', error);
+      console.error('❌ Error cargando publicaciones:', error);
     } finally {
       setCargando(false);
     }

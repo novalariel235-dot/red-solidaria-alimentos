@@ -57,18 +57,28 @@ export async function crearPublicacion(
   comercioNombre: string,
   data: Omit<Publicacion, 'id' | 'usuarioId' | 'comercioNombre' | 'createdAt' | 'estado'>
 ): Promise<string> {
+  console.log('📝 crearPublicacion llamada');
+  console.log('📝 usuarioId:', usuarioId);
+  console.log('📝 comercioNombre:', comercioNombre);
+  console.log('📝 data:', data);
+  
   if (!isFirebaseConfigured) {
     throw new Error('Firebase no configurado');
   }
 
-  const docRef = await addDoc(collection(db, 'publicaciones'), {
+  const docData = {
     ...data,
     usuarioId,
     comercioNombre,
     estado: 'disponible',
     createdAt: serverTimestamp()
-  });
+  };
+  
+  console.log('📝 Guardando en Firestore:', docData);
+  
+  const docRef = await addDoc(collection(db, 'publicaciones'), docData);
 
+  console.log('✅ Publicación creada con ID:', docRef.id);
   return docRef.id;
 }
 
@@ -89,10 +99,17 @@ export async function obtenerPublicacionesUsuario(usuarioId: string): Promise<Pu
 }
 
 export async function obtenerTodasLasPublicaciones(): Promise<Publicacion[]> {
-  if (!isFirebaseConfigured) return [];
+  console.log('📚 obtenerTodasLasPublicaciones llamada');
+  console.log('📚 Firebase configurado:', isFirebaseConfigured);
+  
+  if (!isFirebaseConfigured) {
+    console.log('⚠️ Firebase no configurado');
+    return [];
+  }
 
   try {
     // Intentar con ordenamiento por fecha (requiere índice)
+    console.log('📚 Intentando obtener publicaciones ordenadas por fecha...');
     const q = query(
       collection(db, 'publicaciones'),
       orderBy('createdAt', 'desc'),
@@ -100,12 +117,16 @@ export async function obtenerTodasLasPublicaciones(): Promise<Publicacion[]> {
     );
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
+    const publicaciones = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as Publicacion[];
+    
+    console.log('✅ Publicaciones obtenidas (ordenadas):', publicaciones.length);
+    console.log('📋 Primera publicación:', publicaciones[0]);
+    return publicaciones;
   } catch (error) {
-    console.warn('Índice no encontrado, obteniendo publicaciones sin ordenar:', error);
+    console.warn('⚠️ Error con índice, usando fallback:', error);
     // Fallback: obtener sin ordenar y ordenar en el cliente
     const q = query(
       collection(db, 'publicaciones'),
@@ -118,12 +139,17 @@ export async function obtenerTodasLasPublicaciones(): Promise<Publicacion[]> {
       ...doc.data()
     })) as Publicacion[];
 
+    console.log('✅ Publicaciones obtenidas (sin ordenar):', publicaciones.length);
+
     // Ordenar por fecha en el cliente
-    return publicaciones.sort((a, b) => {
+    const ordenadas = publicaciones.sort((a, b) => {
       const fechaA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
       const fechaB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
       return fechaB - fechaA; // Descendente (más reciente primero)
     });
+    
+    console.log('📋 Primera publicación (ordenada):', ordenadas[0]);
+    return ordenadas;
   }
 }
 
