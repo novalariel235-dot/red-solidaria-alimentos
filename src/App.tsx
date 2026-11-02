@@ -2097,18 +2097,23 @@ function AppContent() {
   // Observer de Firebase Auth para persistencia de sesión
   useEffect(() => {
     const unsubscribe = observarAuth(async (user) => {
+      console.log('🔐 Auth state changed:', user ? user.email : 'null');
       setUsuario(user);
       if (user) {
         // Intentar cargar comercio guardado
         try {
+          console.log('📖 Intentando cargar comercio para UID:', user.uid);
           const comercioGuardado = await obtenerComercio(user.uid);
+          console.log('📖 Comercio cargado:', comercioGuardado);
           if (comercioGuardado) {
             setComercio(comercioGuardado);
+            console.log('✅ Comercio establecido en estado');
           } else {
+            console.log('⚠️ No se encontró comercio guardado');
             setComercio(null);
           }
         } catch (err) {
-          console.error('Error cargando comercio:', err);
+          console.error('❌ Error cargando comercio:', err);
           setComercio(null);
         }
       } else {
@@ -2124,13 +2129,21 @@ function AppContent() {
   };
 
   const handleOnboardingComplete = async (comercioData: Comercio) => {
+    console.log('✅ handleOnboardingComplete llamado con:', comercioData);
+    console.log('✅ Usuario actual:', usuario);
+    
     setComercio(comercioData);
+    
     if (usuario) {
       try {
+        console.log('💾 Guardando comercio en Firebase...');
         await guardarComercio(usuario.uid, comercioData);
+        console.log('✅ Comercio guardado en Firebase');
       } catch (err) {
-        console.error('Error guardando comercio:', err);
+        console.error('❌ Error guardando comercio:', err);
       }
+    } else {
+      console.error('❌ No hay usuario para guardar el comercio');
     }
   };
 

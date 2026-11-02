@@ -204,36 +204,77 @@ export function observarAuth(callback: (user: Usuario | null) => void): () => vo
 
 // Guardar comercio del usuario
 export async function guardarComercio(uid: string, comercio: Comercio): Promise<void> {
-  if (!isFirebaseConfigured) return;
-  await setDoc(doc(db, 'usuarios', uid, 'perfil', 'comercio'), {
-    ...comercio,
-    updatedAt: serverTimestamp()
-  });
+  console.log('💾 guardarComercio llamado para UID:', uid);
+  console.log('💾 Datos a guardar:', comercio);
+  
+  if (!isFirebaseConfigured) {
+    console.log('⚠️ Firebase no configurado, no se guardó');
+    return;
+  }
+  
+  try {
+    const docRef = doc(db, 'usuarios', uid, 'perfil', 'comercio');
+    console.log('📄 Guardando en:', docRef.path);
+    
+    await setDoc(docRef, {
+      ...comercio,
+      updatedAt: serverTimestamp()
+    });
+    
+    console.log('✅ Comercio guardado exitosamente');
+  } catch (error) {
+    console.error('❌ Error guardando comercio:', error);
+    throw error;
+  }
 }
 
 // Obtener comercio del usuario
 export async function obtenerComercio(uid: string): Promise<Comercio | null> {
-  if (!isFirebaseConfigured) return null;
-  const docSnap = await getDoc(doc(db, 'usuarios', uid, 'perfil', 'comercio'));
-  if (docSnap.exists()) {
-    const data = docSnap.data();
-    return {
-      nombre: data.nombre || '',
-      tipo: data.tipo || '',
-      tipoUsuario: data.tipoUsuario || 'comercio',
-      direccion: data.direccion || '',
-      lat: data.lat || undefined,
-      lng: data.lng || undefined,
-      telefono: data.telefono || '',
-      descripcion: data.descripcion || '',
-      diasRetiro: data.diasRetiro || [],
-      horarioDesde: data.horarioDesde || '',
-      horarioHasta: data.horarioHasta || '',
-      capacidad: data.capacidad || undefined,
-      personasAtendidas: data.personasAtendidas || undefined
-    };
+  console.log('🔍 obtenerComercio llamado para UID:', uid);
+  console.log('🔍 Firebase configurado:', isFirebaseConfigured);
+  
+  if (!isFirebaseConfigured) {
+    console.log('⚠️ Firebase no configurado, retornando null');
+    return null;
   }
-  return null;
+  
+  try {
+    const docRef = doc(db, 'usuarios', uid, 'perfil', 'comercio');
+    console.log('📄 Referencia del documento:', docRef.path);
+    
+    const docSnap = await getDoc(docRef);
+    console.log('📄 Documento existe:', docSnap.exists());
+    
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      console.log('📄 Datos del documento:', data);
+      
+      const comercio = {
+        nombre: data.nombre || '',
+        tipo: data.tipo || '',
+        tipoUsuario: data.tipoUsuario || 'comercio',
+        direccion: data.direccion || '',
+        lat: data.lat || undefined,
+        lng: data.lng || undefined,
+        telefono: data.telefono || '',
+        descripcion: data.descripcion || '',
+        diasRetiro: data.diasRetiro || [],
+        horarioDesde: data.horarioDesde || '',
+        horarioHasta: data.horarioHasta || '',
+        capacidad: data.capacidad || undefined,
+        personasAtendidas: data.personasAtendidas || undefined
+      };
+      
+      console.log('✅ Comercio retornado:', comercio);
+      return comercio;
+    }
+    
+    console.log('⚠️ Documento no existe en Firestore');
+    return null;
+  } catch (error) {
+    console.error('❌ Error en obtenerComercio:', error);
+    return null;
+  }
 }
 
 // Publicar excedente
