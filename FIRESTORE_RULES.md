@@ -48,6 +48,25 @@ service cloud.firestore {
         request.auth.uid == resource.data.comedorId
       );
     }
+
+    // Chats - solo participantes pueden leer/escribir
+    match /chats/{chatId} {
+      allow read: if request.auth != null && 
+        request.auth.uid in resource.data.participantes;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && 
+        request.auth.uid in resource.data.participantes;
+      
+      // Mensajes dentro del chat
+      match /mensajes/{mensajeId} {
+        allow read: if request.auth != null && 
+          request.auth.uid in get(/databases/$(database)/documents/chats/{chatId}).data.participantes;
+        allow create: if request.auth != null && 
+          request.auth.uid in get(/databases/$(database)/documents/chats/{chatId}).data.participantes;
+        allow update: if request.auth != null && 
+          request.auth.uid in get(/databases/$(database)/documents/chats/{chatId}).data.participantes;
+      }
+    }
   }
 }
 ```

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Package, Clock, Calendar, MessageCircle, Search, Filter } from 'lucide-react';
-import { obtenerTodasLasPublicaciones, crearReserva, type Publicacion } from '../services';
+import { obtenerTodasLasPublicaciones, crearReserva, crearOObtenerChat, type Publicacion } from '../services';
 
 interface PublicacionesDisponiblesProps {
   comedorId: string;
   comedorNombre: string;
+  onIniciarChat?: (chatId: string) => void;
 }
 
-export default function PublicacionesDisponibles({ comedorId, comedorNombre }: PublicacionesDisponiblesProps) {
+export default function PublicacionesDisponibles({ comedorId, comedorNombre, onIniciarChat }: PublicacionesDisponiblesProps) {
   const [publicaciones, setPublicaciones] = useState<Publicacion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState('');
@@ -77,6 +78,31 @@ export default function PublicacionesDisponibles({ comedorId, comedorNombre }: P
       alert('Error al enviar la reserva');
     } finally {
       setEnviando(false);
+    }
+  };
+
+  const handleContactar = async (publicacion: Publicacion) => {
+    try {
+      console.log('💬 Iniciando chat con comercio:', publicacion.comercioNombre);
+      
+      const chatId = await crearOObtenerChat(
+        comedorId,
+        comedorNombre,
+        publicacion.usuarioId,
+        publicacion.comercioNombre,
+        publicacion.id
+      );
+      
+      console.log('✅ Chat creado/obtenido:', chatId);
+      
+      if (onIniciarChat) {
+        onIniciarChat(chatId);
+      } else {
+        alert('Chat iniciado. Andá al módulo "Chat" para ver la conversación.');
+      }
+    } catch (error) {
+      console.error('Error iniciando chat:', error);
+      alert('Error al iniciar el chat');
     }
   };
 
@@ -188,10 +214,17 @@ export default function PublicacionesDisponibles({ comedorId, comedorNombre }: P
 
               <div className="flex items-center gap-2 pt-4 border-t border-stone-100 dark:border-stone-700">
                 <button 
+                  onClick={() => handleContactar(pub)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-white dark:bg-stone-700 hover:bg-stone-50 dark:hover:bg-stone-600 text-[#5a7a54] dark:text-[#8faa88] border border-[#5a7a54] dark:border-[#8faa88] transition-all"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Contactar
+                </button>
+                <button 
                   onClick={() => setPublicacionSeleccionada(pub)}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-[#5a7a54] dark:bg-[#4a5d49] hover:bg-[#4d6a48] dark:hover:bg-[#3d4d3c] text-white transition-all"
                 >
-                  <MessageCircle className="w-4 h-4" />
+                  <Package className="w-4 h-4" />
                   Reservar
                 </button>
               </div>

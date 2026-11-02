@@ -43,6 +43,7 @@ import Perfil from './components/Perfil';
 import Configuracion from './components/Configuracion';
 import PublicacionesDisponibles from './components/PublicacionesDisponibles';
 import MisReservas from './components/MisReservas';
+import Chat from './components/Chat';
 import { ThemeProvider } from './ThemeContext';
 
 // ─── Types ───────────────────────────────────────────────
@@ -2287,6 +2288,10 @@ function AppContent() {
               usuarioId={usuario.uid} 
               tipoUsuario={comercio.tipoUsuario} 
             />
+          )}
+
+          {activeSection === 'chat' && (
+            <Chat usuarioId={usuario.uid} />
           )}
         </div>
       </div>

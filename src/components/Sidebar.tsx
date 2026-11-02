@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Home, Package, ClipboardList, UtensilsCrossed, BarChart3,
   Bell, Settings, LogOut, Menu, X, HeartHandshake, ChevronRight, User,
-  ShoppingBag, Heart
+  ShoppingBag, Heart, MessageCircle
 } from 'lucide-react';
 import { obtenerNotificacionesUsuario } from '../services';
 
@@ -53,6 +53,7 @@ export default function Sidebar({ activeSection, setActiveSection, comercioNombr
     { id: 'publicar', label: 'Publicar', icon: Package },
     { id: 'mis-publicaciones', label: 'Mis Publicaciones', icon: ClipboardList },
     { id: 'mis-reservas', label: 'Solicitudes', icon: Heart },
+    { id: 'chat', label: 'Chat', icon: MessageCircle },
     { id: 'comedores', label: 'Comedores', icon: UtensilsCrossed },
     { id: 'impacto', label: 'Mi Impacto', icon: BarChart3 },
   ];
@@ -61,6 +62,7 @@ export default function Sidebar({ activeSection, setActiveSection, comercioNombr
   const menuItemsComedor: MenuItem[] = [
     { id: 'publicaciones-disponibles', label: 'Excedentes', icon: ShoppingBag },
     { id: 'mis-reservas', label: 'Mis Reservas', icon: Heart },
+    { id: 'chat', label: 'Chat', icon: MessageCircle },
     { id: 'comedores', label: 'Comedores', icon: UtensilsCrossed },
   ];
 

@@ -273,6 +273,188 @@ export async function obtenerEstadisticasUsuario(usuarioId: string) {
   };
 }
 
+// ─── Chat/Mensajería ─────────────────────────────────────
+export interface Mensaje {
+  id: string;
+  emisorId: string;
+  emisorNombre: string;
+  texto: string;
+  timestamp: Timestamp;
+  leido: boolean;
+}
+
+export interface Chat {
+  id: string;
+  participantes: string[];
+  nombresParticipantes: string[];
+  publicacionId?: string;
+  ultimoMensaje: string;
+  ultimoMensajeTimestamp: Timestamp;
+  noLeidos: number;
+}
+
+// Crear o obtener chat existente entre dos usuarios
+export async function crearOObtenerChat(
+  usuarioId1: string,
+  nombreUsuario1: string,
+  usuarioId2: string,
+  nombreUsuario2: string,
+  publicacionId?: string
+): Promise<string> {
+  console.log('💬 Crear/obtener chat entre:', usuarioId1, 'y', usuarioId2);
+  
+  if (!isFirebaseConfigured) {
+    throw new Error('Firebase no configurado');
+  }
+
+  // Buscar si ya existe un chat entre estos dos usuarios
+  const chatsRef = collection(db, 'chats');
+  const q = query(
+    chatsRef,
+    where('participantes', 'array-contains', usuarioId1)
+  );
+
+  const snapshot = await getDocs(q);
+  let chatExistente: string | null = null;
+
+  snapshot.docs.forEach(doc => {
+    const data = doc.data();
+    if (data.participantes.includes(usuarioId2)) {
+      // Si hay publicacionId, verificar que sea el mismo chat
+      if (!publicacionId || data.publicacionId === publicacionId) {
+        chatExistente = doc.id;
+      }
+    }
+  });
+
+  if (chatExistente) {
+    console.log('✅ Chat existente encontrado:', chatExistente);
+    return chatExistente;
+  }
+
+  // Crear nuevo chat
+  console.log('🆕 Creando nuevo chat...');
+  const nuevoChat = {
+    participantes: [usuarioId1, usuarioId2],
+    nombresParticipantes: [nombreUsuario1, nombreUsuario2],
+    publicacionId: publicacionId || null,
+    ultimoMensaje: '',
+    ultimoMensajeTimestamp: serverTimestamp(),
+    noLeidos: 0
+  };
+
+  const docRef = await addDoc(chatsRef, nuevoChat);
+  console.log('✅ Nuevo chat creado:', docRef.id);
+  return docRef.id;
+}
+
+// Enviar mensaje
+export async function enviarMensaje(
+  chatId: string,
+  emisorId: string,
+  emisorNombre: string,
+  receptorId: string,
+  texto: string
+): Promise<void> {
+  console.log('📤 Enviando mensaje en chat:', chatId);
+  
+  if (!isFirebaseConfigured) {
+    throw new Error('Firebase no configurado');
+  }
+
+  // Agregar mensaje a la subcolección
+  const mensajesRef = collection(db, 'chats', chatId, 'mensajes');
+  await addDoc(mensajesRef, {
+    emisorId,
+    emisorNombre,
+    texto,
+    timestamp: serverTimestamp(),
+    leido: false
+  });
+
+  // Actualizar metadata del chat
+  const chatRef = doc(db, 'chats', chatId);
+  await updateDoc(chatRef, {
+    ultimoMensaje: texto,
+    ultimoMensajeTimestamp: serverTimestamp()
+  });
+
+  // Crear notificación para el receptor
+  await crearNotificacion(
+    receptorId,
+    'mensaje',
+    'Nuevo mensaje',
+    `${emisorNombre}: ${texto.substring(0, 50)}${texto.length > 50 ? '...' : ''}`
+  );
+
+  console.log('✅ Mensaje enviado');
+}
+
+// Obtener chats de un usuario
+export async function obtenerChatsUsuario(usuarioId: string): Promise<Chat[]> {
+  console.log('📥 Obteniendo chats para usuario:', usuarioId);
+  
+  if (!isFirebaseConfigured) return [];
+
+  const chatsRef = collection(db, 'chats');
+  const q = query(
+    chatsRef,
+    where('participantes', 'array-contains', usuarioId)
+  );
+
+  const snapshot = await getDocs(q);
+  const chats = snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as Chat[];
+
+  console.log('✅ Chats obtenidos:', chats.length);
+  return chats.sort((a, b) => {
+    const timeA = a.ultimoMensajeTimestamp?.toMillis() || 0;
+    const timeB = b.ultimoMensajeTimestamp?.toMillis() || 0;
+    return timeB - timeA; // Más reciente primero
+  });
+}
+
+// Obtener mensajes de un chat
+export async function obtenerMensajesChat(chatId: string): Promise<Mensaje[]> {
+  console.log('📥 Obteniendo mensajes del chat:', chatId);
+  
+  if (!isFirebaseConfigured) return [];
+
+  const mensajesRef = collection(db, 'chats', chatId, 'mensajes');
+  const q = query(mensajesRef, orderBy('timestamp', 'asc'));
+
+  const snapshot = await getDocs(q);
+  const mensajes = snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as Mensaje[];
+
+  console.log('✅ Mensajes obtenidos:', mensajes.length);
+  return mensajes;
+}
+
+// Marcar mensajes como leídos
+export async function marcarMensajesComoLeidos(chatId: string, usuarioId: string): Promise<void> {
+  if (!isFirebaseConfigured) return;
+
+  const mensajesRef = collection(db, 'chats', chatId, 'mensajes');
+  const q = query(
+    mensajesRef,
+    where('emisorId', '!=', usuarioId),
+    where('leido', '==', false)
+  );
+
+  const snapshot = await getDocs(q);
+  const batch = snapshot.docs.map(doc => 
+    updateDoc(doc.ref, { leido: true })
+  );
+
+  await Promise.all(batch);
+  console.log('✅ Mensajes marcados como leídos');
+}
+
 // ─── Reservas ────────────────────────────────────────────
 export interface Reserva {
   id: string;
