@@ -91,17 +91,40 @@ export async function obtenerPublicacionesUsuario(usuarioId: string): Promise<Pu
 export async function obtenerTodasLasPublicaciones(): Promise<Publicacion[]> {
   if (!isFirebaseConfigured) return [];
 
-  const q = query(
-    collection(db, 'publicaciones'),
-    orderBy('createdAt', 'desc'),
-    limit(50)
-  );
+  try {
+    // Intentar con ordenamiento por fecha (requiere índice)
+    const q = query(
+      collection(db, 'publicaciones'),
+      orderBy('createdAt', 'desc'),
+      limit(50)
+    );
 
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  })) as Publicacion[];
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Publicacion[];
+  } catch (error) {
+    console.warn('Índice no encontrado, obteniendo publicaciones sin ordenar:', error);
+    // Fallback: obtener sin ordenar y ordenar en el cliente
+    const q = query(
+      collection(db, 'publicaciones'),
+      limit(50)
+    );
+
+    const snapshot = await getDocs(q);
+    const publicaciones = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Publicacion[];
+
+    // Ordenar por fecha en el cliente
+    return publicaciones.sort((a, b) => {
+      const fechaA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+      const fechaB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+      return fechaB - fechaA; // Descendente (más reciente primero)
+    });
+  }
 }
 
 export async function actualizarEstadoPublicacion(
