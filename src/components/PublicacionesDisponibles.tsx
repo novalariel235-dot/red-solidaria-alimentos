@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Package, Clock, Calendar, MessageCircle, Search, Filter } from 'lucide-react';
-import { obtenerTodasLasPublicaciones, crearReserva, crearOObtenerChat, type Publicacion } from '../services';
+import { Package, Clock, Calendar, MessageCircle, Search, Filter, X, Store } from 'lucide-react';
+import { obtenerTodasLasPublicaciones, crearReserva, crearOObtenerChat, enviarMensaje, type Publicacion } from '../services';
 
 interface PublicacionesDisponiblesProps {
   comedorId: string;
@@ -14,8 +14,10 @@ export default function PublicacionesDisponibles({ comedorId, comedorNombre, onI
   const [busqueda, setBusqueda] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState('todas');
   const [publicacionSeleccionada, setPublicacionSeleccionada] = useState<Publicacion | null>(null);
-  const [mensaje, setMensaje] = useState('');
+  const [mensajeReserva, setMensajeReserva] = useState('');
+  const [mensajeChat, setMensajeChat] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [modoAccion, setModoAccion] = useState<'detalles' | 'reservar' | 'contactar'>('detalles');
 
   useEffect(() => {
     cargarPublicaciones();
@@ -27,12 +29,10 @@ export default function PublicacionesDisponibles({ comedorId, comedorNombre, onI
       console.log('🔄 Cargando publicaciones disponibles...');
       const data = await obtenerTodasLasPublicaciones();
       console.log('📦 Total de publicaciones recibidas:', data.length);
-      console.log('📦 Publicaciones:', data);
       
       // Solo mostrar publicaciones disponibles
       const disponibles = data.filter(p => p.estado === 'disponible');
       console.log('✅ Publicaciones disponibles:', disponibles.length);
-      console.log('✅ Publicaciones disponibles:', disponibles);
       
       setPublicaciones(disponibles);
     } catch (error) {
@@ -66,13 +66,12 @@ export default function PublicacionesDisponibles({ comedorId, comedorNombre, onI
         comedorNombre,
         publicacionSeleccionada.usuarioId,
         publicacionSeleccionada.comercioNombre,
-        mensaje
+        mensajeReserva
       );
       
       alert('¡Reserva enviada! El comercio te notificará cuando la acepte.');
-      setPublicacionSeleccionada(null);
-      setMensaje('');
-      cargarPublicaciones(); // Recargar para actualizar la lista
+      cerrarModal();
+      cargarPublicaciones();
     } catch (error) {
       console.error('Error reservando:', error);
       alert('Error al enviar la reserva');
@@ -81,19 +80,38 @@ export default function PublicacionesDisponibles({ comedorId, comedorNombre, onI
     }
   };
 
-  const handleContactar = async (publicacion: Publicacion) => {
+  const handleContactar = async () => {
+    if (!publicacionSeleccionada) return;
+    
     try {
-      console.log('💬 Iniciando chat con comercio:', publicacion.comercioNombre);
+      setEnviando(true);
+      console.log('💬 Iniciando chat con comercio:', publicacionSeleccionada.comercioNombre);
+      console.log('💬 Comedor ID:', comedorId);
+      console.log('💬 Comercio ID:', publicacionSeleccionada.usuarioId);
       
       const chatId = await crearOObtenerChat(
         comedorId,
         comedorNombre,
-        publicacion.usuarioId,
-        publicacion.comercioNombre,
-        publicacion.id
+        publicacionSeleccionada.usuarioId,
+        publicacionSeleccionada.comercioNombre,
+        publicacionSeleccionada.id
       );
       
       console.log('✅ Chat creado/obtenido:', chatId);
+      
+      // Si hay mensaje inicial, enviarlo
+      if (mensajeChat.trim()) {
+        await enviarMensaje(
+          chatId,
+          comedorId,
+          comedorNombre,
+          publicacionSeleccionada.usuarioId,
+          mensajeChat
+        );
+        console.log('✅ Mensaje inicial enviado');
+      }
+      
+      cerrarModal();
       
       if (onIniciarChat) {
         onIniciarChat(chatId);
@@ -101,9 +119,25 @@ export default function PublicacionesDisponibles({ comedorId, comedorNombre, onI
         alert('Chat iniciado. Andá al módulo "Chat" para ver la conversación.');
       }
     } catch (error) {
-      console.error('Error iniciando chat:', error);
-      alert('Error al iniciar el chat');
+      console.error('❌ Error iniciando chat:', error);
+      alert('Error al iniciar el chat: ' + (error as Error).message);
+    } finally {
+      setEnviando(false);
     }
+  };
+
+  const abrirModal = (pub: Publicacion) => {
+    setPublicacionSeleccionada(pub);
+    setModoAccion('detalles');
+    setMensajeReserva('');
+    setMensajeChat('');
+  };
+
+  const cerrarModal = () => {
+    setPublicacionSeleccionada(null);
+    setModoAccion('detalles');
+    setMensajeReserva('');
+    setMensajeChat('');
   };
 
   const formatearFecha = (timestamp: any) => {
@@ -128,7 +162,7 @@ export default function PublicacionesDisponibles({ comedorId, comedorNombre, onI
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-stone-800 dark:text-stone-100 mb-2">Publicaciones Disponibles</h1>
         <p className="text-stone-500 dark:text-stone-400">
-          Explorá los excedentes disponibles de comercios locales y reservá lo que necesites
+          Hacé click en una publicación para ver detalles, contactar al comercio o reservar
         </p>
       </div>
 
@@ -179,7 +213,11 @@ export default function PublicacionesDisponibles({ comedorId, comedorNombre, onI
       ) : (
         <div className="grid gap-4">
           {publicacionesFiltradas.map((pub) => (
-            <div key={pub.id} className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-6 hover:shadow-lg transition-all">
+            <div 
+              key={pub.id} 
+              onClick={() => abrirModal(pub)}
+              className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-6 hover:shadow-lg hover:border-[#5a7a54] dark:hover:border-[#8faa88] transition-all cursor-pointer"
+            >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-[#5a7a54]/10 dark:bg-[#4a5d49]/20 rounded-xl flex items-center justify-center shrink-0">
@@ -212,85 +250,193 @@ export default function PublicacionesDisponibles({ comedorId, comedorNombre, onI
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 pt-4 border-t border-stone-100 dark:border-stone-700">
-                <button 
-                  onClick={() => handleContactar(pub)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-white dark:bg-stone-700 hover:bg-stone-50 dark:hover:bg-stone-600 text-[#5a7a54] dark:text-[#8faa88] border border-[#5a7a54] dark:border-[#8faa88] transition-all"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  Contactar
-                </button>
-                <button 
-                  onClick={() => setPublicacionSeleccionada(pub)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-[#5a7a54] dark:bg-[#4a5d49] hover:bg-[#4d6a48] dark:hover:bg-[#3d4d3c] text-white transition-all"
-                >
-                  <Package className="w-4 h-4" />
-                  Reservar
-                </button>
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-stone-100 dark:border-stone-700">
+                <span className="text-xs text-stone-400 dark:text-stone-500">
+                  Click para ver detalles →
+                </span>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Modal de reserva */}
+      {/* Modal de detalles/acción */}
       {publicacionSeleccionada && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setPublicacionSeleccionada(null)}>
-          <div className="bg-white dark:bg-stone-800 rounded-2xl max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-stone-200 dark:border-stone-700">
-              <h2 className="text-2xl font-bold text-stone-800 dark:text-stone-100">Reservar publicación</h2>
-              <p className="text-stone-500 dark:text-stone-400 text-sm mt-1">
-                Enviá una solicitud de reserva al comercio
-              </p>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div className="bg-stone-50 dark:bg-stone-700 rounded-xl p-4">
-                <div className="font-semibold text-stone-800 dark:text-stone-100 mb-1">
-                  {publicacionSeleccionada.categoria}
-                </div>
-                <div className="text-sm text-stone-600 dark:text-stone-300 mb-2">
-                  {publicacionSeleccionada.descripcion}
-                </div>
-                <div className="text-sm text-stone-500 dark:text-stone-400">
-                  <span className="font-medium">Cantidad:</span> {publicacionSeleccionada.cantidad}
-                </div>
-                <div className="text-sm text-stone-500 dark:text-stone-400">
-                  <span className="font-medium">Comercio:</span> {publicacionSeleccionada.comercioNombre}
-                </div>
-              </div>
-
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4" onClick={cerrarModal}>
+          <div className="bg-white dark:bg-stone-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="sticky top-0 bg-white dark:bg-stone-800 border-b border-stone-200 dark:border-stone-700 p-6 flex items-center justify-between">
               <div>
-                <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">
-                  Mensaje para el comercio (opcional)
-                </label>
-                <textarea
-                  value={mensaje}
-                  onChange={(e) => setMensaje(e.target.value)}
-                  placeholder="Ej: Hola, somos el Comedor Esperanza y nos interesa reservar estos alimentos..."
-                  rows={4}
-                  className="w-full px-4 py-3 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-xl focus:border-[#5a7a54] dark:focus:border-[#8faa88] focus:ring-2 focus:ring-[#5a7a54]/10 dark:focus:ring-[#8faa88]/10 transition-all outline-none resize-none text-stone-800 dark:text-stone-100 placeholder:text-stone-300 dark:placeholder:text-stone-500"
-                />
+                <h2 className="text-2xl font-bold text-stone-800 dark:text-stone-100">
+                  {publicacionSeleccionada.categoria}
+                </h2>
+                <p className="text-stone-500 dark:text-stone-400 text-sm mt-1">
+                  Publicado por {publicacionSeleccionada.comercioNombre}
+                </p>
               </div>
+              <button
+                onClick={cerrarModal}
+                className="p-2 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-stone-500 dark:text-stone-400" />
+              </button>
             </div>
 
-            <div className="p-6 border-t border-stone-200 dark:border-stone-700 flex gap-3">
-              <button
-                onClick={handleReservar}
-                disabled={enviando}
-                className="flex-1 bg-[#5a7a54] dark:bg-[#4a5d49] hover:bg-[#4d6a48] dark:hover:bg-[#3d4d3c] disabled:opacity-50 text-white py-3 rounded-xl font-semibold transition-all"
-              >
-                {enviando ? 'Enviando...' : 'Enviar reserva'}
-              </button>
-              <button
-                onClick={() => {
-                  setPublicacionSeleccionada(null);
-                  setMensaje('');
-                }}
-                className="px-6 py-3 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 font-semibold rounded-xl transition-all"
-              >
-                Cancelar
-              </button>
+            {/* Contenido */}
+            <div className="p-6 space-y-6">
+              {modoAccion === 'detalles' && (
+                <>
+                  {/* Detalles de la publicación */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Descripción</label>
+                      <div className="px-4 py-3 bg-stone-50 dark:bg-stone-700 rounded-xl text-stone-800 dark:text-stone-100">
+                        {publicacionSeleccionada.descripcion}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Cantidad</label>
+                        <div className="px-4 py-3 bg-stone-50 dark:bg-stone-700 rounded-xl text-stone-800 dark:text-stone-100">
+                          {publicacionSeleccionada.cantidad}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Vencimiento</label>
+                        <div className="px-4 py-3 bg-stone-50 dark:bg-stone-700 rounded-xl text-stone-800 dark:text-stone-100">
+                          {publicacionSeleccionada.vencimientoEstimado}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Fecha de publicación</label>
+                      <div className="px-4 py-3 bg-stone-50 dark:bg-stone-700 rounded-xl text-stone-800 dark:text-stone-100">
+                        {formatearFecha(publicacionSeleccionada.createdAt)}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">Comercio</label>
+                      <div className="px-4 py-3 bg-stone-50 dark:bg-stone-700 rounded-xl flex items-center gap-3">
+                        <Store className="w-5 h-5 text-[#5a7a54] dark:text-[#8faa88]" />
+                        <span className="text-stone-800 dark:text-stone-100">{publicacionSeleccionada.comercioNombre}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Botones de acción */}
+                  <div className="flex gap-3 pt-4 border-t border-stone-200 dark:border-stone-700">
+                    <button
+                      onClick={() => setModoAccion('contactar')}
+                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-stone-700 hover:bg-stone-50 dark:hover:bg-stone-600 text-[#5a7a54] dark:text-[#8faa88] border-2 border-[#5a7a54] dark:border-[#8faa88] rounded-xl font-semibold transition-all"
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                      Contactar Comercio
+                    </button>
+                    <button
+                      onClick={() => setModoAccion('reservar')}
+                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#5a7a54] dark:bg-[#4a5d49] hover:bg-[#4d6a48] dark:hover:bg-[#3d4d3c] text-white rounded-xl font-semibold transition-all"
+                    >
+                      <Package className="w-5 h-5" />
+                      Reservar
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {modoAccion === 'contactar' && (
+                <>
+                  <div className="bg-[#5a7a54]/10 dark:bg-[#4a5d49]/20 rounded-xl p-4 border border-[#5a7a54]/20 dark:border-[#4a5d49]/30">
+                    <div className="flex items-start gap-3">
+                      <MessageCircle className="w-5 h-5 text-[#5a7a54] dark:text-[#8faa88] shrink-0 mt-0.5" />
+                      <div>
+                        <h3 className="font-semibold text-stone-800 dark:text-stone-100 mb-1">Iniciar conversación</h3>
+                        <p className="text-sm text-stone-600 dark:text-stone-300">
+                          Se abrirá un chat con {publicacionSeleccionada.comercioNombre}. Podés enviar un mensaje inicial opcional.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">
+                      Mensaje inicial (opcional)
+                    </label>
+                    <textarea
+                      value={mensajeChat}
+                      onChange={(e) => setMensajeChat(e.target.value)}
+                      placeholder="Ej: Hola, vi tu publicación de facturas. ¿Todavía están disponibles?"
+                      rows={4}
+                      className="w-full px-4 py-3 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-xl focus:border-[#5a7a54] dark:focus:border-[#8faa88] focus:ring-2 focus:ring-[#5a7a54]/10 dark:focus:ring-[#8faa88]/10 transition-all outline-none resize-none text-stone-800 dark:text-stone-100 placeholder:text-stone-300 dark:placeholder:text-stone-500"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4 border-t border-stone-200 dark:border-stone-700">
+                    <button
+                      onClick={() => setModoAccion('detalles')}
+                      className="px-6 py-3 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 font-semibold rounded-xl transition-all"
+                    >
+                      Volver
+                    </button>
+                    <button
+                      onClick={handleContactar}
+                      disabled={enviando}
+                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#5a7a54] dark:bg-[#4a5d49] hover:bg-[#4d6a48] dark:hover:bg-[#3d4d3c] disabled:opacity-50 text-white rounded-xl font-semibold transition-all"
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                      {enviando ? 'Iniciando chat...' : 'Iniciar Chat'}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {modoAccion === 'reservar' && (
+                <>
+                  <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-200 dark:border-green-900">
+                    <div className="flex items-start gap-3">
+                      <Package className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+                      <div>
+                        <h3 className="font-semibold text-stone-800 dark:text-stone-100 mb-1">Solicitar reserva</h3>
+                        <p className="text-sm text-stone-600 dark:text-stone-300">
+                          Enviá una solicitud de reserva a {publicacionSeleccionada.comercioNombre}. El comercio te notificará cuando la acepte.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-stone-600 dark:text-stone-300 mb-2">
+                      Mensaje para el comercio (opcional)
+                    </label>
+                    <textarea
+                      value={mensajeReserva}
+                      onChange={(e) => setMensajeReserva(e.target.value)}
+                      placeholder="Ej: Hola, somos el Comedor Esperanza y nos interesa reservar estos alimentos..."
+                      rows={4}
+                      className="w-full px-4 py-3 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-xl focus:border-[#5a7a54] dark:focus:border-[#8faa88] focus:ring-2 focus:ring-[#5a7a54]/10 dark:focus:ring-[#8faa88]/10 transition-all outline-none resize-none text-stone-800 dark:text-stone-100 placeholder:text-stone-300 dark:placeholder:text-stone-500"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4 border-t border-stone-200 dark:border-stone-700">
+                    <button
+                      onClick={() => setModoAccion('detalles')}
+                      className="px-6 py-3 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 font-semibold rounded-xl transition-all"
+                    >
+                      Volver
+                    </button>
+                    <button
+                      onClick={handleReservar}
+                      disabled={enviando}
+                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-[#5a7a54] dark:bg-[#4a5d49] hover:bg-[#4d6a48] dark:hover:bg-[#3d4d3c] disabled:opacity-50 text-white rounded-xl font-semibold transition-all"
+                    >
+                      <Package className="w-5 h-5" />
+                      {enviando ? 'Enviando...' : 'Enviar Reserva'}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

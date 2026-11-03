@@ -2279,7 +2279,10 @@ function AppContent() {
           {activeSection === 'publicaciones-disponibles' && (
             <PublicacionesDisponibles 
               comedorId={usuario.uid} 
-              comedorNombre={comercio.nombre} 
+              comedorNombre={comercio.nombre}
+              onIniciarChat={(chatId) => {
+                setActiveSection('chat');
+              }}
             />
           )}
 
