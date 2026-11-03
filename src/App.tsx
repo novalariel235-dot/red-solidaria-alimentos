@@ -158,16 +158,73 @@ function LandingScreen({ onNavigate, usuarioLogueado }: {
   usuarioLogueado?: boolean;
 }) {
   return (
-    <div className="min-h-screen bg-[#faf9f7] flex flex-col relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-[#c8d5c3]/25 to-transparent rounded-full blur-3xl -translate-y-1/4 translate-x-1/4" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-[#e8d5c4]/20 to-transparent rounded-full blur-3xl translate-y-1/4 -translate-x-1/4" />
-        <div className="absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-gradient-to-br from-[#8faa88]/10 to-transparent rounded-full blur-3xl" />
-        <div className="absolute inset-0 opacity-[0.025]" style={{
-          backgroundImage: 'radial-gradient(circle, #5a7a54 1px, transparent 1px)',
-          backgroundSize: '40px 40px'
-        }} />
+    <div className="min-h-screen bg-gradient-to-br from-[#f5f3ef] via-[#faf9f7] to-[#eef2ec] flex flex-col relative overflow-hidden">
+      {/* Animated background blobs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Blob 1 - Verde sage grande */}
+        <div 
+          className="absolute w-[600px] h-[600px] rounded-full opacity-30 blur-3xl animate-float"
+          style={{
+            background: 'radial-gradient(circle, #c8d5c3 0%, transparent 70%)',
+            top: '-10%',
+            right: '-10%',
+            animationDuration: '15s'
+          }}
+        />
+        
+        {/* Blob 2 - Terracota cálido */}
+        <div 
+          className="absolute w-[500px] h-[500px] rounded-full opacity-25 blur-3xl animate-float-delayed"
+          style={{
+            background: 'radial-gradient(circle, #e8d5c4 0%, transparent 70%)',
+            bottom: '-5%',
+            left: '-10%',
+            animationDuration: '18s'
+          }}
+        />
+        
+        {/* Blob 3 - Verde medio */}
+        <div 
+          className="absolute w-[400px] h-[400px] rounded-full opacity-20 blur-3xl animate-float"
+          style={{
+            background: 'radial-gradient(circle, #8faa88 0%, transparent 70%)',
+            top: '40%',
+            left: '20%',
+            animationDuration: '20s',
+            animationDelay: '3s'
+          }}
+        />
+
+        {/* Blob 4 - Beige suave */}
+        <div 
+          className="absolute w-[350px] h-[350px] rounded-full opacity-25 blur-3xl animate-float-delayed"
+          style={{
+            background: 'radial-gradient(circle, #d4c5b0 0%, transparent 70%)',
+            top: '20%',
+            right: '15%',
+            animationDuration: '22s',
+            animationDelay: '5s'
+          }}
+        />
+
+        {/* Patrón de puntos sutil */}
+        <div 
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: 'radial-gradient(circle, #5a7a54 1px, transparent 1px)',
+            backgroundSize: '32px 32px'
+          }}
+        />
+
+        {/* Líneas decorativas */}
+        <svg className="absolute inset-0 w-full h-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
+              <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#5a7a54" strokeWidth="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+        </svg>
       </div>
 
       {/* Content */}
@@ -191,6 +248,7 @@ function LandingScreen({ onNavigate, usuarioLogueado }: {
             <div className="absolute -top-3 -right-3 w-6 h-6 rounded-full bg-[#c8d5c3] opacity-60 animate-float" style={{ animationDelay: '0.5s' }} />
             <div className="absolute -bottom-2 -left-2 w-4 h-4 rounded-full bg-[#e8d5c4] opacity-60 animate-float" style={{ animationDelay: '1s' }} />
             <div className="absolute top-1/2 -right-5 w-3 h-3 rounded-full bg-[#8faa88] opacity-40 animate-float" style={{ animationDelay: '1.5s' }} />
+            <div className="absolute top-1/4 -left-4 w-2 h-2 rounded-full bg-[#c47d5a] opacity-50 animate-float" style={{ animationDelay: '2s' }} />
           </div>
         </div>
 
@@ -206,19 +264,19 @@ function LandingScreen({ onNavigate, usuarioLogueado }: {
             Villa Regina · Río Negro
           </p>
           <p className="text-base md:text-lg text-stone-500 leading-relaxed max-w-md mx-auto">
-            Conectamos los excedentes de comercios locales con comedores comunitarios. 
-            La inteligencia artificial organiza, clasifica y notifica de forma automática.
+            Conectamos los excedentes de comercios locales con comedores comunitarios 
+            para que nada se pierda y llegue a quienes más lo necesitan.
           </p>
         </div>
 
         {/* Feature pills */}
         <div className="flex flex-wrap justify-center gap-3 mt-10 mb-12 animate-fade-in-delay-2">
           {[
-            { icon: Bot, text: 'IA Qwen integrada' },
             { icon: MessageCircle, text: 'Notificaciones WhatsApp' },
             { icon: HeartHandshake, text: 'Impacto social' },
+            { icon: Users, text: 'Comunidad activa' },
           ].map((item, i) => (
-            <div key={i} className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-stone-200 px-4 py-2 rounded-full text-sm text-stone-600 shadow-sm">
+            <div key={i} className="flex items-center gap-2 bg-white/70 backdrop-blur-sm border border-stone-200/80 px-4 py-2 rounded-full text-sm text-stone-600 shadow-sm hover:shadow-md hover:bg-white/90 transition-all">
               <item.icon className="w-4 h-4 text-[#5a7a54]" />
               {item.text}
             </div>
