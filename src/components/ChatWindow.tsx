@@ -81,30 +81,30 @@ export default function ChatWindow({ chatId, usuarioId, chat, onVolver }: ChatWi
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-stone-200 bg-white">
+      <div className="p-4 border-b border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800">
         <div className="flex items-center gap-3">
           <button
             onClick={onVolver}
-            className="p-2 hover:bg-stone-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-stone-600" />
+            <ArrowLeft className="w-5 h-5 text-stone-600 dark:text-stone-300" />
           </button>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#5a7a54] to-[#8faa88] flex items-center justify-center text-white font-semibold">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#5a7a54] to-[#8faa88] dark:from-[#4a5d49] dark:to-[#6b7d6a] flex items-center justify-center text-white font-semibold">
             {obtenerNombreOtroUsuario().charAt(0).toUpperCase()}
           </div>
           <div>
-            <h3 className="font-semibold text-stone-800">{obtenerNombreOtroUsuario()}</h3>
-            <p className="text-xs text-stone-500">En línea</p>
+            <h3 className="font-semibold text-stone-800 dark:text-stone-100">{obtenerNombreOtroUsuario()}</h3>
+            <p className="text-xs text-stone-500 dark:text-stone-400">En línea</p>
           </div>
         </div>
       </div>
 
       {/* Mensajes */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-stone-50">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-stone-50 dark:bg-stone-900">
         {mensajes.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-stone-500 text-sm">Iniciá la conversación</p>
-            <p className="text-stone-400 text-xs mt-2">
+            <p className="text-stone-500 dark:text-stone-400 text-sm">Iniciá la conversación</p>
+            <p className="text-stone-400 dark:text-stone-500 text-xs mt-2">
               Enviá el primer mensaje
             </p>
           </div>
@@ -120,14 +120,14 @@ export default function ChatWindow({ chatId, usuarioId, chat, onVolver }: ChatWi
                 <div
                   className={`max-w-[70%] rounded-2xl px-4 py-2 ${
                     esMio
-                      ? 'bg-[#5a7a54] text-white'
-                      : 'bg-white border border-stone-200 text-stone-800'
+                      ? 'bg-[#5a7a54] dark:bg-[#4a5d49] text-white'
+                      : 'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-100'
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap break-words">{mensaje.texto}</p>
                   <p
                     className={`text-xs mt-1 ${
-                      esMio ? 'text-white/70' : 'text-stone-400'
+                      esMio ? 'text-white/70' : 'text-stone-400 dark:text-stone-500'
                     }`}
                   >
                     {formatearHora(mensaje.timestamp)}
@@ -141,7 +141,7 @@ export default function ChatWindow({ chatId, usuarioId, chat, onVolver }: ChatWi
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-stone-200 bg-white">
+      <div className="p-4 border-t border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800">
         <div className="flex gap-2">
           <textarea
             value={nuevoMensaje}
@@ -149,12 +149,12 @@ export default function ChatWindow({ chatId, usuarioId, chat, onVolver }: ChatWi
             onKeyPress={handleKeyPress}
             placeholder="Escribí un mensaje..."
             rows={1}
-            className="flex-1 px-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#5a7a54]"
+            className="flex-1 px-4 py-2 bg-stone-50 dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-lg text-sm text-stone-800 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 resize-none focus:outline-none focus:ring-2 focus:ring-[#5a7a54] dark:focus:ring-[#8faa88]"
           />
           <button
             onClick={handleEnviar}
             disabled={!nuevoMensaje.trim() || enviando}
-            className="px-4 py-2 bg-[#5a7a54] hover:bg-[#4d6a48] disabled:bg-stone-300 text-white rounded-lg transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-[#5a7a54] dark:bg-[#4a5d49] hover:bg-[#4d6a48] dark:hover:bg-[#3d4d3c] disabled:bg-stone-300 dark:disabled:bg-stone-600 text-white rounded-lg transition-colors flex items-center gap-2"
           >
             <Send className="w-4 h-4" />
           </button>

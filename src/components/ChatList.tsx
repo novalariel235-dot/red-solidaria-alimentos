@@ -73,16 +73,16 @@ export default function ChatList({ usuarioId, onSeleccionarChat, chatActivo }: C
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-stone-200">
-        <h2 className="text-xl font-bold text-stone-800 mb-3">Mis Conversaciones</h2>
+      <div className="p-4 border-b border-stone-200 dark:border-stone-700">
+        <h2 className="text-xl font-bold text-stone-800 dark:text-stone-100 mb-3">Mis Conversaciones</h2>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 dark:text-stone-500" />
           <input
             type="text"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar conversación..."
-            className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5a7a54]"
+            className="w-full pl-10 pr-4 py-2 bg-stone-50 dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-lg text-sm text-stone-800 dark:text-stone-100 placeholder:text-stone-400 dark:placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-[#5a7a54] dark:focus:ring-[#8faa88]"
           />
         </div>
       </div>
@@ -91,18 +91,18 @@ export default function ChatList({ usuarioId, onSeleccionarChat, chatActivo }: C
       <div className="flex-1 overflow-y-auto">
         {chatsFiltrados.length === 0 ? (
           <div className="p-6 text-center">
-            <MessageCircle className="w-16 h-16 text-stone-300 mx-auto mb-4" />
-            <p className="text-stone-500 text-sm">
+            <MessageCircle className="w-16 h-16 text-stone-300 dark:text-stone-600 mx-auto mb-4" />
+            <p className="text-stone-500 dark:text-stone-400 text-sm">
               {busqueda ? 'No se encontraron chats' : 'No tenés conversaciones aún'}
             </p>
             {!busqueda && (
-              <p className="text-stone-400 text-xs mt-2">
+              <p className="text-stone-400 dark:text-stone-500 text-xs mt-2">
                 Contactá un comercio desde la sección de excedentes
               </p>
             )}
           </div>
         ) : (
-          <div className="divide-y divide-stone-100">
+          <div className="divide-y divide-stone-100 dark:divide-stone-700">
             {chatsFiltrados.map((chat) => {
               const nombreOtroUsuario = obtenerNombreOtroUsuario(chat);
               const isActive = chatActivo === chat.id;
@@ -111,24 +111,24 @@ export default function ChatList({ usuarioId, onSeleccionarChat, chatActivo }: C
                 <button
                   key={chat.id}
                   onClick={() => onSeleccionarChat(chat.id)}
-                  className={`w-full p-4 text-left hover:bg-stone-50 transition-colors ${
-                    isActive ? 'bg-[#5a7a54]/5 border-l-4 border-[#5a7a54]' : ''
+                  className={`w-full p-4 text-left hover:bg-stone-50 dark:hover:bg-stone-700 transition-colors ${
+                    isActive ? 'bg-[#5a7a54]/5 dark:bg-[#4a5d49]/20 border-l-4 border-[#5a7a54] dark:border-[#8faa88]' : ''
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#5a7a54] to-[#8faa88] flex items-center justify-center text-white font-semibold flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#5a7a54] to-[#8faa88] dark:from-[#4a5d49] dark:to-[#6b7d6a] flex items-center justify-center text-white font-semibold flex-shrink-0">
                       {nombreOtroUsuario.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-semibold text-stone-800 truncate">
+                        <h3 className="font-semibold text-stone-800 dark:text-stone-100 truncate">
                           {nombreOtroUsuario}
                         </h3>
-                        <span className="text-xs text-stone-400 flex-shrink-0 ml-2">
+                        <span className="text-xs text-stone-400 dark:text-stone-500 flex-shrink-0 ml-2">
                           {formatearTiempo(chat.ultimoMensajeTimestamp)}
                         </span>
                       </div>
-                      <p className="text-sm text-stone-600 truncate">
+                      <p className="text-sm text-stone-600 dark:text-stone-300 truncate">
                         {chat.ultimoMensaje || 'Iniciá la conversación'}
                       </p>
                     </div>
